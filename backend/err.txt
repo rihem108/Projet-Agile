@@ -1,0 +1,59 @@
+﻿[dotenv@17.3.1] injecting env (0) from .env -- tip: ÔÜÖ´©Å  write to custom object with { processEnv: myObject }
+Server running on port 5000
+node : MongoParseError: 
+options usenewurlparser, 
+useunifiedtopology are not 
+supported
+Au caractère Ligne:1 : 13
++ cd backend; node server.js 
+> log.txt 2>&1
++             
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (MongoPa  
+  rseError...e not support   
+ ed:String) [], RemoteExc    
+eption
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+    at parseOptions (C:\Users
+\PC\Desktop\Projet-Agile\back
+end\node_modules\mongodb\lib\
+connection_string.js:273:15)
+    at new MongoClient (C:\Us
+ers\PC\Desktop\Projet-Agile\b
+ackend\node_modules\mongodb\l
+ib\mongo_client.js:67:61)
+    at NativeConnection.creat
+eClient (C:\Users\PC\Desktop\
+Projet-Agile\backend\node_mod
+ules\mongoose\lib\drivers\nod
+e-mongodb-native\connection.j
+s:334:14)
+    at 
+NativeConnection.openUri (C:\
+Users\PC\Desktop\Projet-Agile
+\backend\node_modules\mongoos
+e\lib\connection.js:1074:34)
+    at Mongoose.connect (C:\U
+sers\PC\Desktop\Projet-Agile\
+backend\node_modules\mongoose
+\lib\mongoose.js:475:15)
+    at Object.<anonymous> (C:
+\Users\PC\Desktop\Projet-Agil
+e\backend\server.js:18:10)
+    at Module._compile (node:
+internal/modules/cjs/loader:1
+761:14)
+    at Object..js (node:inter
+nal/modules/cjs/loader:1893:1
+0)
+    at Module.load (node:inte
+rnal/modules/cjs/loader:1481:
+32)
+    at Module._load (node:int
+ernal/modules/cjs/loader:1300
+:12) {
+  errorLabelSet: Set(0) {}
+}

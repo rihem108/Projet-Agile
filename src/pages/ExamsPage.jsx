@@ -1,6 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { Plus, Edit2, Trash2, X } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
+import { api } from '../api';
 
 const ExamsPage = () => {
   const { exams, setExams } = useContext(AppContext);
@@ -15,18 +16,21 @@ const ExamsPage = () => {
 
   const closeModal = () => setIsModalOpen(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.id) {
-      setExams(exams.map(ex => ex.id === formData.id ? formData : ex));
+      const updated = await api.put(`/exams/${formData.id}`, formData);
+      setExams(exams.map(ex => ex.id === formData.id ? updated : ex));
     } else {
-      setExams([...exams, { ...formData, id: Date.now() }]);
+      const created = await api.post('/exams', formData);
+      setExams([...exams, created]);
     }
     closeModal();
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Confirmer la suppression ?")) {
+      await api.delete(`/exams/${id}`);
       setExams(exams.filter(ex => ex.id !== id));
     }
   };
