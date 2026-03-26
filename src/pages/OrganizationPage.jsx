@@ -1,29 +1,34 @@
 import React, { useContext, useState } from 'react';
 import { CalendarCog, Check } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
+import { api } from '../api';
 
 const OrganizationPage = () => {
   const { exams, rooms, users, assignments, setAssignments } = useContext(AppContext);
   const [loading, setLoading] = useState(false);
 
-  const generateAutoAssignments = () => {
+  const generateAutoAssignments = async () => {
     setLoading(true);
     // Fake automated assignment algorithm avoiding conflicts
-    setTimeout(() => {
-      const teachers = users.filter(u => u.role === 'Teacher');
-      const newAssignments = exams.map((exam, index) => {
-        const room = rooms[index % rooms.length] || rooms[0];
-        const teacher = teachers[index % teachers.length] || teachers[0];
-        return {
-          id: Date.now() + index,
-          examId: exam.id,
-          roomId: room?.id,
-          supervisorId: teacher?.id
-        };
-      });
-      setAssignments(newAssignments);
-      setLoading(false);
-    }, 1200);
+    const teachers = users.filter(u => u.role === 'Teacher');
+    const newAssignments = exams.map((exam, index) => {
+      const room = rooms[index % rooms.length] || rooms[0];
+      const teacher = teachers[index % teachers.length] || teachers[0];
+      return {
+        examId: exam.id,
+        roomId: room?.id,
+        supervisorId: teacher?.id
+      };
+    });
+    
+    try {
+      const savedAssignments = await api.post('/assignments/bulk', newAssignments);
+      setAssignments(savedAssignments);
+    } catch (e) {
+      console.error(e);
+    }
+    
+    setLoading(false);
   };
 
   const getExamSubject = (id) => exams.find(e => e.id === id)?.subject || 'Inconnu';

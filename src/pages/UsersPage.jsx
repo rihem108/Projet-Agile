@@ -1,6 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { Plus, Edit2, Trash2, X } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
+import { api } from '../api';
 
 const UsersPage = () => {
   const { users, setUsers } = useContext(AppContext);
@@ -15,18 +16,21 @@ const UsersPage = () => {
 
   const closeModal = () => setIsModalOpen(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.id) {
-      setUsers(users.map(u => u.id === formData.id ? formData : u));
+      const updated = await api.put(`/users/${formData.id}`, formData);
+      setUsers(users.map(u => u.id === formData.id ? updated : u));
     } else {
-      setUsers([...users, { ...formData, id: Date.now() }]);
+      const created = await api.post('/users', formData);
+      setUsers([...users, created]);
     }
     closeModal();
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Voulez-vous vraiment supprimer cet utilisateur ?")) {
+      await api.delete(`/users/${id}`);
       setUsers(users.filter(u => u.id !== id));
     }
   };

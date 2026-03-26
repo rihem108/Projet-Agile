@@ -1,6 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { Plus, Edit2, Trash2, X } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
+import { api } from '../api';
 
 const RoomsPage = () => {
   const { rooms, setRooms } = useContext(AppContext);
@@ -15,18 +16,21 @@ const RoomsPage = () => {
 
   const closeModal = () => setIsModalOpen(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.id) {
-      setRooms(rooms.map(r => r.id === formData.id ? formData : r));
+      const updated = await api.put(`/rooms/${formData.id}`, formData);
+      setRooms(rooms.map(r => r.id === formData.id ? updated : r));
     } else {
-      setRooms([...rooms, { ...formData, id: Date.now() }]);
+      const created = await api.post('/rooms', formData);
+      setRooms([...rooms, created]);
     }
     closeModal();
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Confirmer la suppression de cette salle ?")) {
+      await api.delete(`/rooms/${id}`);
       setRooms(rooms.filter(r => r.id !== id));
     }
   };

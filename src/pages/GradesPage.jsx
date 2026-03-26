@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import { CheckCircle, ShieldAlert } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
+import { api } from '../api';
 
 const GradesPage = () => {
   const { grades, users, exams, setGrades } = useContext(AppContext);
@@ -8,8 +9,9 @@ const GradesPage = () => {
   const getStudentName = (id) => users.find(u => u.id === id)?.name || 'Inconnu';
   const getExamSubject = (id) => exams.find(e => e.id === id)?.subject || 'Inconnu';
 
-  const handleValidate = (gradeId) => {
-    setGrades(grades.map(g => g.id === gradeId ? { ...g, validated: true } : g));
+  const handleValidate = async (gradeId) => {
+    const updated = await api.put(`/grades/${gradeId}`, { validated: true });
+    setGrades(grades.map(g => g.id === gradeId ? updated : g));
   };
 
   const pendingGrades = grades.filter(g => !g.validated).length;
