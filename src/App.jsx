@@ -15,7 +15,8 @@ import ReportsPage from './pages/ReportsPage';
 import Login from './pages/Login';
 
 const Sidebar = () => {
-  const { logout } = useContext(AppContext);
+  const { user, logout } = useContext(AppContext);
+  const role = user?.role || 'Student';
 
   return (
     <aside className="sidebar">
@@ -24,27 +25,35 @@ const Sidebar = () => {
         ExamAdmin
       </div>
       <nav className="nav-menu">
-        <NavLink to="/" className={({ isActive }) => `nav-link \${isActive ? 'active' : ''}`} end>
+        <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} end>
           <LayoutDashboard /> Tableau de Bord
         </NavLink>
-        <NavLink to="/users" className={({ isActive }) => `nav-link \${isActive ? 'active' : ''}`}>
-          <Users /> Utilisateurs
-        </NavLink>
-        <NavLink to="/exams" className={({ isActive }) => `nav-link \${isActive ? 'active' : ''}`}>
+        {role === 'Admin' && (
+          <NavLink to="/users" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <Users /> Utilisateurs
+          </NavLink>
+        )}
+        <NavLink to="/exams" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <BookOpen /> Examens
         </NavLink>
-        <NavLink to="/rooms" className={({ isActive }) => `nav-link \${isActive ? 'active' : ''}`}>
-          <MapPin /> Salles
-        </NavLink>
-        <NavLink to="/organization" className={({ isActive }) => `nav-link \${isActive ? 'active' : ''}`}>
-          <CalendarCog /> Organisation
-        </NavLink>
-        <NavLink to="/grades" className={({ isActive }) => `nav-link \${isActive ? 'active' : ''}`}>
+        {role === 'Admin' && (
+          <NavLink to="/rooms" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <MapPin /> Salles
+          </NavLink>
+        )}
+        {role === 'Admin' && (
+          <NavLink to="/organization" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <CalendarCog /> Organisation
+          </NavLink>
+        )}
+        <NavLink to="/grades" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <CheckCircle /> Notes
         </NavLink>
-        <NavLink to="/reports" className={({ isActive }) => `nav-link \${isActive ? 'active' : ''}`}>
-          <FileText /> Rapports
-        </NavLink>
+        {(role === 'Admin' || role === 'Teacher') && (
+          <NavLink to="/reports" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <FileText /> Rapports
+          </NavLink>
+        )}
       </nav>
       <div style={{ marginTop: 'auto' }}>
         <button onClick={logout} className="nav-link" style={{ width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}>

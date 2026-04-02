@@ -4,7 +4,7 @@ import { AppContext } from '../context/AppContext';
 import { api } from '../api';
 
 const GradesPage = () => {
-  const { grades, users, exams, setGrades } = useContext(AppContext);
+  const { grades, users, exams, setGrades, user } = useContext(AppContext);
 
   const getStudentName = (id) => users.find(u => u.id === id)?.name || 'Inconnu';
   const getExamSubject = (id) => exams.find(e => e.id === id)?.subject || 'Inconnu';
@@ -14,7 +14,13 @@ const GradesPage = () => {
     setGrades(grades.map(g => g.id === gradeId ? updated : g));
   };
 
-  const pendingGrades = grades.filter(g => !g.validated).length;
+  const displayGrades = user?.role === 'Student' 
+    ? grades.filter(g => g.studentId === user.id) 
+    : grades;
+
+  const pendingGrades = user?.role !== 'Student' 
+    ? displayGrades.filter(g => !g.validated).length 
+    : 0;
 
   return (
     <div>
@@ -35,11 +41,11 @@ const GradesPage = () => {
               <th>Matière</th>
               <th>Note globale</th>
               <th>Statut de Validation</th>
-              <th>Action Admin</th>
+              {user?.role !== 'Student' && <th>Action Admin</th>}
             </tr>
           </thead>
           <tbody>
-            {grades.map(grade => (
+            {displayGrades.map(grade => (
               <tr key={grade.id}>
                 <td style={{ fontWeight: 500 }}>{getStudentName(grade.studentId)}</td>
                 <td>{getExamSubject(grade.examId)}</td>
@@ -57,15 +63,17 @@ const GradesPage = () => {
                     </span>
                   )}
                 </td>
-                <td>
-                  {!grade.validated ? (
-                    <button className="btn btn-primary" style={{ padding: '0.4rem 0.8rem' }} onClick={() => handleValidate(grade.id)}>
-                      Valider Officiellement
-                    </button>
-                  ) : (
-                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Aucune action</span>
-                  )}
-                </td>
+                {user?.role !== 'Student' && (
+                  <td>
+                    {!grade.validated ? (
+                      <button className="btn btn-primary" style={{ padding: '0.4rem 0.8rem' }} onClick={() => handleValidate(grade.id)}>
+                        Valider Officiellement
+                      </button>
+                    ) : (
+                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Aucune action</span>
+                    )}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

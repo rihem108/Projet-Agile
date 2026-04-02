@@ -4,7 +4,8 @@ import { AppContext } from '../context/AppContext';
 import { api } from '../api';
 
 const ExamsPage = () => {
-  const { exams, setExams } = useContext(AppContext);
+  const { exams, setExams, user } = useContext(AppContext);
+  const canEdit = user?.role === 'Admin' || user?.role === 'Teacher';
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ id: null, subject: '', date: '', duration: '' });
 
@@ -39,9 +40,11 @@ const ExamsPage = () => {
     <div>
       <div className="page-header">
         <h1 className="page-title">Gestion des Examens</h1>
-        <button className="btn btn-primary" onClick={() => openModal()}>
-          <Plus size={18} /> Planifier Examen
-        </button>
+        {canEdit && (
+          <button className="btn btn-primary" onClick={() => openModal()}>
+            <Plus size={18} /> Planifier Examen
+          </button>
+        )}
       </div>
 
       <div className="glass-card table-container">
@@ -51,7 +54,7 @@ const ExamsPage = () => {
               <th>Matière</th>
               <th>Date</th>
               <th>Durée</th>
-              <th>Actions</th>
+              {canEdit && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -60,17 +63,19 @@ const ExamsPage = () => {
                 <td style={{ fontWeight: 500 }}>{exam.subject}</td>
                 <td>{exam.date}</td>
                 <td>{exam.duration}</td>
-                <td>
-                  <div className="flex gap-2">
-                    <button className="btn-icon btn-ghost" onClick={() => openModal(exam)}><Edit2 size={16} /></button>
-                    <button className="btn-icon btn-ghost" style={{ color: 'var(--danger)' }} onClick={() => handleDelete(exam.id)}><Trash2 size={16} /></button>
-                  </div>
-                </td>
+                {canEdit && (
+                  <td>
+                    <div className="flex gap-2">
+                      <button className="btn-icon btn-ghost" onClick={() => openModal(exam)}><Edit2 size={16} /></button>
+                      <button className="btn-icon btn-ghost" style={{ color: 'var(--danger)' }} onClick={() => handleDelete(exam.id)}><Trash2 size={16} /></button>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
             {exams.length === 0 && (
               <tr>
-                <td colSpan="4" style={{ textAlign: 'center', padding: '2rem' }}>Aucun examen planifié.</td>
+                <td colSpan={canEdit ? "4" : "3"} style={{ textAlign: 'center', padding: '2rem' }}>Aucun examen planifié.</td>
               </tr>
             )}
           </tbody>

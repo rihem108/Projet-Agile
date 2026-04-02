@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const User = require('./models/User');
 const Exam = require('./models/Exam');
@@ -19,8 +21,71 @@ mongoose.connect(mongoURI)
   .then(() => console.log('MongoDB connected!'))
   .catch(err => console.error(err));
 
-// ========== ROUTES ========== //
+// ========== AUTH ========== //
+const authMiddleware = (req, res, next) => {
+  // Ignorer pour login, register et seed
+  if (req.path === '/auth/login' || req.path === '/auth/register' || req.path === '/seed') return next();
+  
+  const authHeader = req.header('Authorization');
+  if (!authHeader) return res.status(401).json({ message: 'Accès refusé. Token manquant.' });
+  
+  const token = authHeader.replace('Bearer ', '');
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretjwtkey2026');
+    req.user = decoded;
+    next();
+  } catch(err) {
+    res.status(401).json({ message: 'Token invalide' });
+  }
+};
 
+app.use('/api', authMiddleware);
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ message: 'Identifiants invalides' });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ message: 'Identifiants invalides' });
+
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'supersecretjwtkey2026', { expiresIn: '1d' });
+    res.json({ token, user });
+  } catch(err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(400).json({ message: 'Cet email existe déjà' });
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const user = new User({ name, email, password: hashedPassword, role: role || 'Student' });
+    await user.save();
+
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'supersecretjwtkey2026', { expiresIn: '1d' });
+    res.json({ token, user });
+  } catch(err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+app.get('/api/auth/me', async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    res.json(user);
+  } catch(err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// ========== ROUTES ========== //
 // USERS
 app.get('/api/users', async (req, res) => {
   const users = await User.find();
@@ -110,11 +175,15 @@ app.get('/api/seed', async (req, res) => {
   await Exam.deleteMany();
   await Room.deleteMany();
   await Grade.deleteMany();
-  await Assignment.deleteMany();
+  await Assignment.deleteMany({});
 
-  const u1 = await User.create({ name: 'Alice Dupont', role: 'Teacher', email: 'alice@exam.com' });
-  const u2 = await User.create({ name: 'Bob Martin', role: 'Student', email: 'bob@exam.com' });
-  const u3 = await User.create({ name: 'Charlie Durand', role: 'Student', email: 'charlie@exam.com' });
+  const salt = await bcrypt.genSalt(10);
+  const pass = await bcrypt.hash('123456', salt);
+
+  const u1 = await User.create({ name: 'Alice Dupont', role: 'Teacher', email: 'alice@exam.com', password: pass });
+  const u2 = await User.create({ name: 'Bob Martin', role: 'Student', email: 'bob@exam.com', password: pass });
+  const u3 = await User.create({ name: 'Charlie Durand', role: 'Student', email: 'charlie@exam.com', password: pass });
+  const u4 = await User.create({ name: 'Admin Principal', role: 'Admin', email: 'admin@exam.com', password: pass });
   
   const e1 = await Exam.create({ subject: 'Mathématiques', date: '2026-05-15', duration: '2h' });
   const e2 = await Exam.create({ subject: 'Physique', date: '2026-05-16', duration: '1h30' });

@@ -3,14 +3,24 @@ import { ShieldCheck } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 
 const Login = () => {
-  const { login } = useContext(AppContext);
+  const { login, register } = useContext(AppContext);
+  const [isRegistering, setIsRegistering] = useState(false);
+  
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('Student');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (email && password) {
-      login(email, password);
+    if (isRegistering) {
+      if (name && email && password) {
+        register(name, email, password, role);
+      }
+    } else {
+      if (email && password) {
+        login(email, password);
+      }
     }
   };
 
@@ -18,11 +28,27 @@ const Login = () => {
     <div className="login-container">
       <div className="glass-card login-card">
         <ShieldCheck className="login-icon" />
-        <h2 style={{ marginBottom: '1.5rem', color: 'var(--text-primary)' }}>Espace Administration</h2>
+        <h2 style={{ marginBottom: '1.5rem', color: 'var(--text-primary)' }}>
+          {isRegistering ? "Créer un Compte" : "Espace Administration"}
+        </h2>
         
         <form onSubmit={handleSubmit}>
+          {isRegistering && (
+            <div className="form-group" style={{ textAlign: 'left' }}>
+              <label className="form-label">Nom complet</label>
+              <input 
+                type="text" 
+                className="form-input" 
+                placeholder="John Doe" 
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+          )}
+
           <div className="form-group" style={{ textAlign: 'left' }}>
-            <label className="form-label">Email Professionnel</label>
+            <label className="form-label">Email</label>
             <input 
               type="email" 
               className="form-input" 
@@ -32,7 +58,8 @@ const Login = () => {
               required
             />
           </div>
-          <div className="form-group" style={{ textAlign: 'left', marginBottom: '2rem' }}>
+
+          <div className="form-group" style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
             <label className="form-label">Mot de passe</label>
             <input 
               type="password" 
@@ -43,14 +70,43 @@ const Login = () => {
               required
             />
           </div>
+
+          {isRegistering && (
+            <div className="form-group" style={{ textAlign: 'left', marginBottom: '2rem' }}>
+              <label className="form-label">Rôle</label>
+              <select 
+                className="form-input" 
+                value={role} 
+                onChange={(e) => setRole(e.target.value)}
+              >
+                <option value="Student">Étudiant</option>
+                <option value="Teacher">Enseignant</option>
+                <option value="Admin">Administrateur</option>
+              </select>
+            </div>
+          )}
+
           <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.75rem' }}>
-            Se Connecter
+            {isRegistering ? "S'inscrire" : "Se Connecter"}
           </button>
         </form>
         
         <p style={{ marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-          (Utilisez n'importe quel email/mot de passe)
+          {isRegistering ? "Vous avez déjà un compte ?" : "Vous n'avez pas de compte ?"}
+          <button 
+            type="button" 
+            className="btn-ghost" 
+            style={{ padding: 0, marginLeft: '0.5rem', color: 'var(--primary)' }} 
+            onClick={() => setIsRegistering(!isRegistering)}>
+            {isRegistering ? "Se connecter" : "S'inscrire"}
+          </button>
         </p>
+
+        {!isRegistering && (
+          <p style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+            Démos avec mot de passe '123456' : admin@exam.com, alice@exam.com (Teacher), bob@exam.com (Student).
+          </p>
+        )}
       </div>
     </div>
   );
