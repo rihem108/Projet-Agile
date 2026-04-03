@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, NavLink } from 'react-router-dom';
 import { LayoutDashboard, Users, BookOpen, MapPin, CalendarCog, FileText, CheckCircle, LogOut } from 'lucide-react';
 import { AppProvider, AppContext } from './context/AppContext';
+import { Toaster } from 'react-hot-toast';
 import './index.css';
 
 // Pages
@@ -110,6 +111,13 @@ const AppContent = () => {
 function App() {
   return (
     <AppProvider>
+      <Toaster position="top-right" toastOptions={{
+        style: {
+          borderRadius: '10px',
+          background: '#0F172A',
+          color: '#fff',
+        },
+      }} />
       <AppContent />
     </AppProvider>
   );

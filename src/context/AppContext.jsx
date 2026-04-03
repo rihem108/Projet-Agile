@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { api } from '../api';
+import toast from 'react-hot-toast';
 
 export const AppContext = createContext();
 
@@ -46,9 +47,10 @@ export const AppProvider = ({ children }) => {
       localStorage.setItem('token', res.token);
       setIsAuthenticated(true);
       setUser(res.user);
+      toast.success("Connexion réussie !");
     } catch (err) {
       console.error(err);
-      alert("Identifiants incorrects ou erreur serveur");
+      toast.error("Identifiants incorrects ou erreur serveur");
     }
   };
 
@@ -58,9 +60,10 @@ export const AppProvider = ({ children }) => {
       localStorage.setItem('token', res.token);
       setIsAuthenticated(true);
       setUser(res.user);
+      toast.success("Compte créé avec succès ! Bienvenue.");
     } catch (err) {
       console.error(err);
-      alert("Erreur lors de l'inscription : " + err.message);
+      toast.error("Erreur lors de l'inscription : Cet email existe déjà.");
     }
   };
 

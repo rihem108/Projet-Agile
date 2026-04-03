@@ -1,5 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { FileText, Download, Printer } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { AppContext } from '../context/AppContext';
 
 const ReportsPage = () => {
@@ -13,7 +14,7 @@ const ReportsPage = () => {
   const handleDownloadPDF = () => {
     setLoading(true);
     setTimeout(() => {
-      alert("Demande de génération du document PDF confirmée.");
+      toast.success("Génération du document PDF en cours...");
       setLoading(false);
     }, 1000);
   };
