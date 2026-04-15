@@ -12,6 +12,7 @@ import UsersPage from './pages/UsersPage';
 import ExamsPage from './pages/ExamsPage';
 import RoomsPage from './pages/RoomsPage';
 import OrganizationPage from './pages/OrganizationPage';
+import AssignmentPage from './pages/AssignmentPage';
 import GradesPage from './pages/GradesPage';
 import ReportsPage from './pages/ReportsPage';
 import Login from './pages/Login';
@@ -40,6 +41,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       </div>
       
       <nav className="nav-menu">
+<<<<<<< HEAD
         {menuItems.map((item) => (
           item.roles.includes(role) && (
             <NavLink 
@@ -53,6 +55,42 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
             </NavLink>
           )
         ))}
+=======
+        <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} end>
+          <LayoutDashboard /> Tableau de Bord
+        </NavLink>
+        {role === 'Admin' && (
+          <NavLink to="/users" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <Users /> Utilisateurs
+          </NavLink>
+        )}
+        <NavLink to="/exams" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+          <BookOpen /> Examens
+        </NavLink>
+        {role === 'Admin' && (
+          <NavLink to="/rooms" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <MapPin /> Salles
+          </NavLink>
+        )}
+        {role === 'Admin' && (
+          <NavLink to="/organization" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <CalendarCog /> Organisation
+          </NavLink>
+        )}
+        <NavLink to="/grades" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+          <CheckCircle /> Notes
+        </NavLink>
+        {(role === 'Admin' || role === 'Teacher') && (
+          <NavLink to="/reports" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <FileText /> Rapports
+          </NavLink>
+        )}
+         {(role === 'Admin') && (
+          <NavLink to="/assignment" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <FileText /> Affectation
+          </NavLink>
+        )}
+>>>>>>> 97f132051f41dbfb97b090c3f2848a138084c397
       </nav>
       
       <div className="sidebar-footer">
@@ -146,6 +184,8 @@ const AppContent = () => {
                 <Route path="/exams" element={<ExamsPage />} />
                 <Route path="/rooms" element={<RoomsPage />} />
                 <Route path="/organization" element={<OrganizationPage />} />
+                <Route path="/assignment" element={<AssignmentPage />} />
+                <Route path="/Affectation" element={<AssignmentPage />} />
                 <Route path="/grades" element={<GradesPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
               </Routes>

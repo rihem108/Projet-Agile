@@ -63,7 +63,7 @@ const OrganizationPage = () => {
               <th>Statut</th>
             </tr>
           </thead>
-          <tbody>
+          {/*<tbody>
             {assignments.length > 0 ? (
               assignments.map(assignment => (
                 <tr key={assignment.id}>
@@ -86,7 +86,7 @@ const OrganizationPage = () => {
                 </td>
               </tr>
             )}
-          </tbody>
+          </tbody>*/}
         </table>
       </div>
     </div>
