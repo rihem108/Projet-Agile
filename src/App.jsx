@@ -1,6 +1,7 @@
+// App.jsx
 import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, BookOpen, MapPin, CalendarCog, FileText, CheckCircle, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, BookOpen, MapPin, CalendarCog, FileText, CheckCircle, LogOut, Bell, Search, User, Menu, X, ChevronDown } from 'lucide-react';
 import { AppProvider, AppContext } from './context/AppContext';
 import { Toaster } from 'react-hot-toast';
 import './index.css';
@@ -15,54 +16,95 @@ import GradesPage from './pages/GradesPage';
 import ReportsPage from './pages/ReportsPage';
 import Login from './pages/Login';
 
-const Sidebar = () => {
+const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const { user, logout } = useContext(AppContext);
   const role = user?.role || 'Student';
 
+  const menuItems = [
+    { path: '/', icon: LayoutDashboard, label: 'Tableau de Bord', roles: ['Admin', 'Teacher', 'Student'] },
+    { path: '/users', icon: Users, label: 'Utilisateurs', roles: ['Admin'] },
+    { path: '/exams', icon: BookOpen, label: 'Examens', roles: ['Admin', 'Teacher', 'Student'] },
+    { path: '/rooms', icon: MapPin, label: 'Salles', roles: ['Admin'] },
+    { path: '/organization', icon: CalendarCog, label: 'Organisation', roles: ['Admin'] },
+    { path: '/grades', icon: CheckCircle, label: 'Notes', roles: ['Admin', 'Teacher', 'Student'] },
+    { path: '/reports', icon: FileText, label: 'Rapports', roles: ['Admin', 'Teacher'] },
+  ];
+
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${!sidebarOpen ? 'collapsed' : ''}`}>
       <div className="brand">
-        <LayoutDashboard size={28} color="#0ea5e9" />
-        ExamAdmin
+        <div className="brand-icon">
+          <LayoutDashboard size={24} />
+        </div>
+        {sidebarOpen && <span className="brand-text">ExamAdmin</span>}
       </div>
+      
       <nav className="nav-menu">
-        <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} end>
-          <LayoutDashboard /> Tableau de Bord
-        </NavLink>
-        {role === 'Admin' && (
-          <NavLink to="/users" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            <Users /> Utilisateurs
-          </NavLink>
-        )}
-        <NavLink to="/exams" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-          <BookOpen /> Examens
-        </NavLink>
-        {role === 'Admin' && (
-          <NavLink to="/rooms" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            <MapPin /> Salles
-          </NavLink>
-        )}
-        {role === 'Admin' && (
-          <NavLink to="/organization" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            <CalendarCog /> Organisation
-          </NavLink>
-        )}
-        <NavLink to="/grades" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-          <CheckCircle /> Notes
-        </NavLink>
-        {(role === 'Admin' || role === 'Teacher') && (
-          <NavLink to="/reports" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            <FileText /> Rapports
-          </NavLink>
-        )}
+        {menuItems.map((item) => (
+          item.roles.includes(role) && (
+            <NavLink 
+              key={item.path}
+              to={item.path} 
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+              end={item.path === '/'}
+            >
+              <item.icon size={20} />
+              {sidebarOpen && <span>{item.label}</span>}
+            </NavLink>
+          )
+        ))}
       </nav>
-      <div style={{ marginTop: 'auto' }}>
-        <button onClick={logout} className="nav-link" style={{ width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-          <LogOut color="var(--danger)" /> 
-          <span style={{ color: 'var(--danger)' }}>Déconnexion</span>
+      
+      <div className="sidebar-footer">
+        <button onClick={logout} className="logout-btn">
+          <LogOut size={20} />
+          {sidebarOpen && <span>Déconnexion</span>}
         </button>
       </div>
     </aside>
+  );
+};
+
+const Header = ({ sidebarOpen, setSidebarOpen }) => {
+  const { user } = useContext(AppContext);
+  
+  return (
+    <header className="header">
+      <div className="header-left">
+        <button 
+          className="menu-toggle"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+        >
+          {sidebarOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+        <div className="search-bar">
+          <Search size={18} />
+          <input type="text" placeholder="Rechercher..." />
+        </div>
+      </div>
+      
+      <div className="header-right">
+        <button className="notification-btn">
+          <Bell size={20} />
+          <span className="notification-dot"></span>
+        </button>
+        
+        <div className="user-profile">
+          <div className="user-avatar">
+            {user?.name?.[0] || 'A'}
+          </div>
+          {sidebarOpen && (
+            <>
+              <div className="user-info">
+                <span className="user-name">{user?.name || 'Admin User'}</span>
+                <span className="user-role">{user?.role || 'Admin'}</span>
+              </div>
+              <ChevronDown size={16} />
+            </>
+          )}
+        </div>
+      </div>
+    </header>
   );
 };
 
@@ -71,14 +113,21 @@ const PrivateRoute = ({ children }) => {
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
-const MainLayout = ({ children }) => (
-  <div className="app-container">
-    <Sidebar />
-    <main className="main-content">
-      {children}
-    </main>
-  </div>
-);
+const MainLayout = ({ children }) => {
+  const [sidebarOpen, setSidebarOpen] = React.useState(true);
+  
+  return (
+    <div className="app-container">
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <div className="main-wrapper">
+        <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        <main className="main-content">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+};
 
 const AppContent = () => {
   const { isAuthenticated } = useContext(AppContext);
@@ -111,17 +160,32 @@ const AppContent = () => {
 function App() {
   return (
     <AppProvider>
-      <Toaster position="top-right" toastOptions={{
-        style: {
-          borderRadius: '10px',
-          background: '#0F172A',
-          color: '#fff',
-        },
-      }} />
+      <Toaster 
+        position="top-right" 
+        toastOptions={{
+          style: {
+            borderRadius: '12px',
+            background: '#1E293B',
+            color: '#fff',
+            border: '1px solid rgba(59, 130, 246, 0.2)',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10B981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#EF4444',
+              secondary: '#fff',
+            },
+          },
+        }} 
+      />
       <AppContent />
     </AppProvider>
   );
 }
 
 export default App;
-
