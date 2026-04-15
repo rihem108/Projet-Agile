@@ -54,9 +54,13 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password, role) => {
+  const register = async (name, email, password, role, className) => {
     try {
-      const res = await api.post('/auth/register', { name, email, password, role });
+      const payload = { name, email, password, role };
+      if (role === 'Student') {
+        payload.className = className;
+      }
+      const res = await api.post('/auth/register', payload);
       localStorage.setItem('token', res.token);
       setIsAuthenticated(true);
       setUser(res.user);

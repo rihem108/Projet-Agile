@@ -11,6 +11,7 @@ import UsersPage from './pages/UsersPage';
 import ExamsPage from './pages/ExamsPage';
 import RoomsPage from './pages/RoomsPage';
 import OrganizationPage from './pages/OrganizationPage';
+import AssignmentPage from './pages/AssignmentPage';
 import GradesPage from './pages/GradesPage';
 import ReportsPage from './pages/ReportsPage';
 import Login from './pages/Login';
@@ -55,6 +56,11 @@ const Sidebar = () => {
             <FileText /> Rapports
           </NavLink>
         )}
+         {(role === 'Admin') && (
+          <NavLink to="/assignment" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <FileText /> Affectation
+          </NavLink>
+        )}
       </nav>
       <div style={{ marginTop: 'auto' }}>
         <button onClick={logout} className="nav-link" style={{ width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
@@ -97,6 +103,8 @@ const AppContent = () => {
                 <Route path="/exams" element={<ExamsPage />} />
                 <Route path="/rooms" element={<RoomsPage />} />
                 <Route path="/organization" element={<OrganizationPage />} />
+                <Route path="/assignment" element={<AssignmentPage />} />
+                <Route path="/Affectation" element={<AssignmentPage />} />
                 <Route path="/grades" element={<GradesPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
               </Routes>

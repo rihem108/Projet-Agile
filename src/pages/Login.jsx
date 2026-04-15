@@ -10,12 +10,13 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('Student');
+  const [className, setClassName] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isRegistering) {
-      if (name && email && password) {
-        register(name, email, password, role);
+      if (name && email && password && (role !== 'Student' || className)) {
+        register(name, email, password, role, className);
       }
     } else {
       if (email && password) {
@@ -77,12 +78,32 @@ const Login = () => {
               <select 
                 className="form-input" 
                 value={role} 
-                onChange={(e) => setRole(e.target.value)}
+                onChange={(e) => {
+                  const nextRole = e.target.value;
+                  setRole(nextRole);
+                  if (nextRole !== 'Student') {
+                    setClassName('');
+                  }
+                }}
               >
                 <option value="Student">Étudiant</option>
                 <option value="Teacher">Enseignant</option>
                 <option value="Admin">Administrateur</option>
               </select>
+            </div>
+          )}
+
+          {isRegistering && role === 'Student' && (
+            <div className="form-group" style={{ textAlign: 'left', marginBottom: '2rem' }}>
+              <label className="form-label">Classe</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Ex: L1 INFO A"
+                value={className}
+                onChange={(e) => setClassName(e.target.value)}
+                required
+              />
             </div>
           )}
 
