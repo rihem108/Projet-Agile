@@ -27,6 +27,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     { path: '/exams', icon: BookOpen, label: 'Examens', roles: ['Admin', 'Teacher', 'Student'] },
     { path: '/rooms', icon: MapPin, label: 'Salles', roles: ['Admin'] },
     { path: '/organization', icon: CalendarCog, label: 'Organisation', roles: ['Admin'] },
+    { path: '/assignment', icon: FileText, label: 'Affectation', roles: ['Admin'] },
     { path: '/grades', icon: CheckCircle, label: 'Notes', roles: ['Admin', 'Teacher', 'Student'] },
     { path: '/reports', icon: FileText, label: 'Rapports', roles: ['Admin', 'Teacher'] },
   ];
@@ -41,7 +42,6 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       </div>
       
       <nav className="nav-menu">
-<<<<<<< HEAD
         {menuItems.map((item) => (
           item.roles.includes(role) && (
             <NavLink 
@@ -55,42 +55,6 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
             </NavLink>
           )
         ))}
-=======
-        <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} end>
-          <LayoutDashboard /> Tableau de Bord
-        </NavLink>
-        {role === 'Admin' && (
-          <NavLink to="/users" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            <Users /> Utilisateurs
-          </NavLink>
-        )}
-        <NavLink to="/exams" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-          <BookOpen /> Examens
-        </NavLink>
-        {role === 'Admin' && (
-          <NavLink to="/rooms" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            <MapPin /> Salles
-          </NavLink>
-        )}
-        {role === 'Admin' && (
-          <NavLink to="/organization" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            <CalendarCog /> Organisation
-          </NavLink>
-        )}
-        <NavLink to="/grades" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-          <CheckCircle /> Notes
-        </NavLink>
-        {(role === 'Admin' || role === 'Teacher') && (
-          <NavLink to="/reports" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            <FileText /> Rapports
-          </NavLink>
-        )}
-         {(role === 'Admin') && (
-          <NavLink to="/assignment" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            <FileText /> Affectation
-          </NavLink>
-        )}
->>>>>>> 97f132051f41dbfb97b090c3f2848a138084c397
       </nav>
       
       <div className="sidebar-footer">
