@@ -16,6 +16,7 @@ import AssignmentPage from './pages/AssignmentPage';
 import GradesPage from './pages/GradesPage';
 import ReportsPage from './pages/ReportsPage';
 import Login from './pages/Login';
+import Register from './pages/Register';
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const { user, logout } = useContext(AppContext);
@@ -138,6 +139,7 @@ const AppContent = () => {
     <Router>
       <Routes>
         <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/" />} />
+        <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to="/" />} />
         
         <Route path="/*" element={
           <PrivateRoute>
