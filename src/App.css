@@ -13,27 +13,7 @@
   --primary-blue-light: #60A5FA;
   --primary-yellow: #F59E0B;
   --primary-yellow-light: #FBBF24;
-  --primary-yellow-dark: #D97706;
-  --success: #10B981;
-  --danger: #EF4444;
-  --warning: #F59E0B;
-  --info: #3B82F6;
-  --dark: #0F172A;
-  --dark-light: #1E293B;
-  --gray: #64748B;
-  --gray-light: #94A3B8;
-  --gray-bg: #F1F5F9;
-  --white: #FFFFFF;
-  --border: #E2E8F0;
-}
-
-body {
-  font-family: 'Inter', sans-serif;
-  overflow-x: hidden;
-}
-
-/* ==================== LOGIN PAGE - ATTRACTIVE BACKGROUND ==================== */
-.login-page {
+  --primary-yellow-dark: #D97706
   min-height: 100vh;
   display: flex;
   align-items: center;
