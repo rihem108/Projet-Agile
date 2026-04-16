@@ -48,9 +48,11 @@ export const AppProvider = ({ children }) => {
       setIsAuthenticated(true);
       setUser(res.user);
       toast.success("Connexion réussie !");
+      return true;
     } catch (err) {
       console.error(err);
       toast.error("Identifiants incorrects ou erreur serveur");
+      return false;
     }
   };
 
