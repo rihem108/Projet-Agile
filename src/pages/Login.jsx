@@ -47,16 +47,9 @@ const Login = () => {
     }
 
     setLoading(true);
-    
-    setTimeout(() => {
-      const success = login(email, password, selectedRole);
-      if (success) {
-        toast.success(`Bienvenue ${selectedRole} !`);
-      } else {
-        toast.error('Email ou mot de passe incorrect');
-      }
-      setLoading(false);
-    }, 1000);
+
+    await login(email, password);
+    setLoading(false);
   };
 
   const roles = [
@@ -300,7 +293,7 @@ const Login = () => {
                   className="demo-btn demo-admin"
                   onClick={() => {
                     setEmail('admin@exam.com');
-                    setPassword('admin123');
+                    setPassword('123456');
                     setSelectedRole('Admin');
                   }}
                 >
@@ -310,8 +303,8 @@ const Login = () => {
                 <button 
                   className="demo-btn demo-teacher"
                   onClick={() => {
-                    setEmail('teacher@exam.com');
-                    setPassword('teacher123');
+                    setEmail('alice@exam.com');
+                    setPassword('123456');
                     setSelectedRole('Teacher');
                   }}
                 >
@@ -321,8 +314,8 @@ const Login = () => {
                 <button 
                   className="demo-btn demo-student"
                   onClick={() => {
-                    setEmail('student@exam.com');
-                    setPassword('student123');
+                    setEmail('bob@exam.com');
+                    setPassword('123456');
                     setSelectedRole('Student');
                   }}
                 >

@@ -1,7 +1,23 @@
 // App.jsx
 import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, BookOpen, MapPin, CalendarCog, FileText, CheckCircle, LogOut, Bell, Search, User, Menu, X, ChevronDown } from 'lucide-react';
+import { 
+  LayoutDashboard, 
+  Users, 
+  BookOpen, 
+  MapPin, 
+  CalendarCog, 
+  FileText, 
+  CheckCircle, 
+  LogOut, 
+  Bell, 
+  Search, 
+  User, 
+  Menu, 
+  X, 
+  ChevronDown,
+  Settings
+} from 'lucide-react';
 import { AppProvider, AppContext } from './context/AppContext';
 import { Toaster } from 'react-hot-toast';
 import './index.css';
@@ -15,6 +31,7 @@ import OrganizationPage from './pages/OrganizationPage';
 import AssignmentPage from './pages/AssignmentPage';
 import GradesPage from './pages/GradesPage';
 import ReportsPage from './pages/ReportsPage';
+import SettingsPage from './pages/SettingsPage';
 import Login from './pages/Login';
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
@@ -30,6 +47,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     { path: '/assignment', icon: FileText, label: 'Affectation', roles: ['Admin'] },
     { path: '/grades', icon: CheckCircle, label: 'Notes', roles: ['Admin', 'Teacher', 'Student'] },
     { path: '/reports', icon: FileText, label: 'Rapports', roles: ['Admin', 'Teacher'] },
+    { path: '/settings', icon: Settings, label: 'Paramètres', roles: ['Admin', 'Teacher', 'Student'] },
   ];
 
   return (
@@ -152,6 +170,7 @@ const AppContent = () => {
                 <Route path="/Affectation" element={<AssignmentPage />} />
                 <Route path="/grades" element={<GradesPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
               </Routes>
             </MainLayout>
           </PrivateRoute>
