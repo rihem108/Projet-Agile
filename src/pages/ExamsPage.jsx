@@ -1,18 +1,53 @@
-import React, { useContext, useMemo, useState } from 'react';
-import { Plus, Edit2, Trash2, X, Users, UserCheck, UserX } from 'lucide-react';
+// src/pages/ExamsPage.jsx
+import React, { useContext, useState, useEffect } from 'react';
+import { 
+  BookOpen, 
+  Search, 
+  Filter, 
+  Plus, 
+  Edit, 
+  Trash2, 
+  Eye, 
+  Calendar,
+  Clock,
+  MapPin,
+  Users,
+  Award,
+  FileText,
+  Download,
+  Upload,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Clock as ClockIcon,
+  GraduationCap
+} from 'lucide-react';
 import { AppContext } from '../context/AppContext';
-import { api } from '../api';
 import toast from 'react-hot-toast';
 
 const ExamsPage = () => {
-  const { exams, setExams, setGrades, assignments, user, users } = useContext(AppContext);
-  const canEdit = user?.role === 'Admin' || user?.role === 'Teacher';
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
+  const { exams, addExam, updateExam, deleteExam } = useContext(AppContext);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterType, setFilterType] = useState('all');
+  const [showModal, setShowModal] = useState(false);
+  const [editingExam, setEditingExam] = useState(null);
   const [selectedExam, setSelectedExam] = useState(null);
-  const [attendanceDraft, setAttendanceDraft] = useState([]);
-  const [savingAttendance, setSavingAttendance] = useState(false);
-  const [formData, setFormData] = useState({ id: null, subject: '', className: '', date: '', duration: '' });
+  const [showDetails, setShowDetails] = useState(false);
+  const [formData, setFormData] = useState({
+    subject: '',
+    code: '',
+    date: '',
+    time: '',
+    duration: '',
+    room: '',
+    supervisor: '',
+    coefficient: '',
+    maxScore: '100',
+    type: 'normal',
+    status: 'scheduled',
+    description: ''
+  });
 
   const visibleExams = user?.role === 'Teacher'
     ? exams.filter(exam => 
@@ -21,270 +56,479 @@ const ExamsPage = () => {
     : exams;
   const emptyColSpan = 4 + (user?.role === 'Teacher' ? 1 : 0) + (canEdit ? 1 : 0);
 
-  const getExamStudents = (exam) => users
-    .filter(student => student.role === 'Student' && String(student.className || '').trim() === String(exam.className || '').trim())
-    .sort((a, b) => a.name.localeCompare(b.name));
+  useEffect(() => {
+    if (exams && exams.length > 0) {
+      setLocalExams(exams);
+    }
+  }, [exams]);
 
-  const attendanceStats = useMemo(() => {
-    const presentCount = attendanceDraft.filter(entry => entry.present).length;
-    return {
-      presentCount,
-      absentCount: attendanceDraft.length - presentCount
-    };
-  }, [attendanceDraft]);
+  const filteredExams = localExams.filter(exam => {
+    const matchesSearch = exam.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          exam.code.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = filterStatus === 'all' || exam.status === filterStatus;
+    const matchesType = filterType === 'all' || exam.type === filterType;
+    return matchesSearch && matchesStatus && matchesType;
+  });
 
-  const openModal = (exam = null) => {
-    if (exam) setFormData({ ...exam, className: exam.className || '' });
-    else setFormData({ id: null, subject: '', className: '', date: '', duration: '' });
-    setIsModalOpen(true);
+  const stats = {
+    total: localExams.length,
+    scheduled: localExams.filter(e => e.status === 'scheduled').length,
+    ongoing: localExams.filter(e => e.status === 'ongoing').length,
+    completed: localExams.filter(e => e.status === 'completed').length,
+    totalStudents: localExams.reduce((acc, e) => acc + (e.registeredStudents || 0), 0),
   };
 
-  const closeModal = () => setIsModalOpen(false);
+  const handleAdd = () => {
+    setEditingExam(null);
+    setFormData({
+      subject: '',
+      code: '',
+      date: '',
+      time: '',
+      duration: '',
+      room: '',
+      supervisor: '',
+      coefficient: '',
+      maxScore: '100',
+      type: 'normal',
+      status: 'scheduled',
+      description: ''
+    });
+    setShowModal(true);
+  };
 
-  const openAttendanceModal = (exam) => {
-    const students = getExamStudents(exam);
-    const savedAttendance = new Map((exam.attendance || []).map(entry => [String(entry.studentId), Boolean(entry.present)]));
+  const handleEdit = (exam) => {
+    setEditingExam(exam);
+    setFormData({
+      subject: exam.subject,
+      code: exam.code,
+      date: exam.date,
+      time: exam.time,
+      duration: exam.duration,
+      room: exam.room,
+      supervisor: exam.supervisor,
+      coefficient: exam.coefficient,
+      maxScore: exam.maxScore || '100',
+      type: exam.type || 'normal',
+      status: exam.status,
+      description: exam.description || ''
+    });
+    setShowModal(true);
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet examen ?')) {
+      setLocalExams(localExams.filter(e => e.id !== id));
+      toast.success('Examen supprimé avec succès');
+    }
+  };
+
+  const handleViewDetails = (exam) => {
     setSelectedExam(exam);
-    setAttendanceDraft(students.map(student => ({
-      studentId: student.id,
-      studentName: student.name,
-      studentEmail: student.email,
-      present: savedAttendance.has(student.id) ? savedAttendance.get(student.id) : true
-    })));
-    setAttendanceModalOpen(true);
+    setShowDetails(true);
   };
 
-  const closeAttendanceModal = () => {
-    setAttendanceModalOpen(false);
-    setSelectedExam(null);
-    setAttendanceDraft([]);
-  };
+  const handleSubmit = () => {
+    if (!formData.subject || !formData.code || !formData.date || !formData.duration) {
+      toast.error('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
 
-  const toggleAttendance = (studentId) => {
-    setAttendanceDraft(current => current.map(entry => (
-      entry.studentId === studentId ? { ...entry, present: !entry.present } : entry
-    )));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const payload = {
-      subject: formData.subject.trim(),
-      className: formData.className.trim(),
-      date: formData.date,
-      duration: formData.duration.trim()
-    };
-
-    if (formData.id) {
-      const updated = await api.put(`/exams/${formData.id}`, payload);
-      setExams(exams.map(ex => ex.id === formData.id ? { ...updated, className: updated.className || payload.className } : ex));
+    if (editingExam) {
+      setLocalExams(localExams.map(e => 
+        e.id === editingExam.id 
+          ? { ...e, ...formData }
+          : e
+      ));
+      toast.success('Examen modifié avec succès');
     } else {
-      await api.post('/exams', payload);
-      const refreshedExams = await api.get('/exams');
-      setExams(refreshedExams);
+      const newExam = {
+        id: Date.now(),
+        ...formData,
+        registeredStudents: 0,
+        completedStudents: 0,
+        avgScore: null
+      };
+      setLocalExams([...localExams, newExam]);
+      toast.success('Examen ajouté avec succès');
     }
-    closeModal();
+    setShowModal(false);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Confirmer la suppression ?")) {
-      await api.delete(`/exams/${id}`);
-      setExams(exams.filter(ex => ex.id !== id));
-    }
+  const getStatusBadge = (status) => {
+    const statuses = {
+      scheduled: { bg: 'rgba(59, 130, 246, 0.12)', color: '#3B82F6', icon: ClockIcon, label: 'Planifié' },
+      ongoing: { bg: 'rgba(245, 158, 11, 0.12)', color: '#F59E0B', icon: AlertCircle, label: 'En cours' },
+      completed: { bg: 'rgba(16, 185, 129, 0.12)', color: '#10B981', icon: CheckCircle, label: 'Terminé' }
+    };
+    const s = statuses[status] || statuses.scheduled;
+    const Icon = s.icon;
+    return (
+      <span className="exam-status-badge" style={{ background: s.bg, color: s.color }}>
+        <Icon size={12} />
+        {s.label}
+      </span>
+    );
   };
 
-  const handleSaveAttendance = async () => {
-    if (!selectedExam) return;
-
-    try {
-      setSavingAttendance(true);
-      const response = await api.put(`/exams/${selectedExam.id}/attendance`, {
-        attendance: attendanceDraft.map(entry => ({
-          studentId: entry.studentId,
-          present: entry.present
-        }))
-      });
-
-      const refreshedExams = await api.get('/exams');
-      setExams(refreshedExams);
-      if (Array.isArray(response.grades)) {
-        setGrades(response.grades);
-      } else {
-        const refreshedGrades = await api.get('/grades');
-        setGrades(refreshedGrades);
-      }
-      toast.success('Présence enregistrée avec succès');
-      closeAttendanceModal();
-    } catch (err) {
-      console.error(err);
-      toast.error('Impossible d\'enregistrer la présence');
-    } finally {
-      setSavingAttendance(false);
+  const getTypeBadge = (type) => {
+    if (type === 'normal') {
+      return <span className="exam-type-badge normal">📝 Normal</span>;
     }
+    return <span className="exam-type-badge practical">💻 Pratique</span>;
   };
 
   return (
-    <div>
-      <div className="page-header">
-        <h1 className="page-title">Gestion des Examens</h1>
-        {canEdit && (
-          <button className="btn btn-primary" onClick={() => openModal()}>
-            <Plus size={18} /> Planifier Examen
-          </button>
-        )}
+    <div className="exams-page">
+      {/* Hero Section */}
+      <div className="exams-hero">
+        <div className="exams-hero-content">
+          <div className="exams-hero-icon">
+            <BookOpen size={28} />
+          </div>
+          <div>
+            <h1>Gestion des Examens</h1>
+            <p>Planifiez, organisez et suivez tous vos examens</p>
+          </div>
+        </div>
+        <button className="exams-add-btn" onClick={handleAdd}>
+          <Plus size={18} />
+          Nouvel examen
+        </button>
       </div>
 
-      <div className="glass-card table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Matière</th>
-              <th>Classe</th>
-              <th>Date</th>
-              <th>Durée</th>
-              {user?.role === 'Teacher' && <th>Présence</th>}
-              {canEdit && <th>Actions</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {visibleExams.map(exam => (
-              <tr key={exam.id}>
-                <td style={{ fontWeight: 500 }}>{exam.subject}</td>
-                <td>{exam.className || 'Non définie'}</td>
-                <td>{exam.date}</td>
-                <td>{exam.duration}</td>
-                {user?.role === 'Teacher' && (
-                  <td>
-                    <button className="btn btn-ghost" onClick={() => openAttendanceModal(exam)} style={{ padding: '0.4rem 0.8rem' }}>
-                      <Users size={16} /> Générer la présence
-                    </button>
-                  </td>
-                )}
-                {canEdit && (
-                  <td>
-                    <div className="flex gap-2">
-                      <button className="btn-icon btn-ghost" onClick={() => openModal(exam)}><Edit2 size={16} /></button>
-                      <button className="btn-icon btn-ghost" style={{ color: 'var(--danger)' }} onClick={() => handleDelete(exam.id)}><Trash2 size={16} /></button>
-                    </div>
-                  </td>
-                )}
-              </tr>
-            ))}
-            {visibleExams.length === 0 && (
-              <tr>
-                <td colSpan={emptyColSpan} style={{ textAlign: 'center', padding: '2rem' }}>Aucun examen planifié.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      {/* Stats Cards */}
+      <div className="exams-stats-grid">
+        <div className="exams-stat-card">
+          <div className="exams-stat-icon total">
+            <BookOpen size={20} />
+          </div>
+          <div className="exams-stat-info">
+            <span className="exams-stat-value">{stats.total}</span>
+            <span className="exams-stat-label">Total examens</span>
+          </div>
+        </div>
+        <div className="exams-stat-card">
+          <div className="exams-stat-icon scheduled">
+            <Calendar size={20} />
+          </div>
+          <div className="exams-stat-info">
+            <span className="exams-stat-value">{stats.scheduled}</span>
+            <span className="exams-stat-label">Planifiés</span>
+          </div>
+        </div>
+        <div className="exams-stat-card">
+          <div className="exams-stat-icon completed">
+            <CheckCircle size={20} />
+          </div>
+          <div className="exams-stat-info">
+            <span className="exams-stat-value">{stats.completed}</span>
+            <span className="exams-stat-label">Terminés</span>
+          </div>
+        </div>
+        <div className="exams-stat-card">
+          <div className="exams-stat-icon students">
+            <Users size={20} />
+          </div>
+          <div className="exams-stat-info">
+            <span className="exams-stat-value">{stats.totalStudents}</span>
+            <span className="exams-stat-label">Étudiants inscrits</span>
+          </div>
+        </div>
       </div>
 
-      {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h2 className="modal-title">{formData.id ? "Modifier" : "Planifier"} Examen</h2>
-              <button className="modal-close" onClick={closeModal}><X size={20} /></button>
+      {/* Filters */}
+      <div className="exams-filters">
+        <div className="exams-search">
+          <Search size={18} />
+          <input 
+            type="text" 
+            placeholder="Rechercher par matière ou code..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="exams-filter-group">
+          <Filter size={18} />
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+            <option value="all">Tous les statuts</option>
+            <option value="scheduled">Planifiés</option>
+            <option value="ongoing">En cours</option>
+            <option value="completed">Terminés</option>
+          </select>
+        </div>
+        <div className="exams-filter-group">
+          <Filter size={18} />
+          <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+            <option value="all">Tous les types</option>
+            <option value="normal">Normal</option>
+            <option value="practical">Pratique</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Exams Table */}
+      <div className="exams-table-wrapper">
+        <div className="exams-table-header">
+          <h3>Liste des examens</h3>
+          <span className="exams-count">{filteredExams.length} examen(s)</span>
+        </div>
+        
+        <div className="exams-table-container">
+          {filteredExams.length > 0 ? (
+            <table className="exams-table">
+              <thead>
+                <tr>
+                  <th>Examen</th>
+                  <th>Date & Horaire</th>
+                  <th>Durée</th>
+                  <th>Salle</th>
+                  <th>Surveillant</th>
+                  <th>Coeff</th>
+                  <th>Type</th>
+                  <th>Statut</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredExams.map((exam) => (
+                  <tr key={exam.id} className="exams-table-row">
+                    <td className="exam-cell">
+                      <div className="exam-info">
+                        <div className="exam-subject">{exam.subject}</div>
+                        <div className="exam-code">{exam.code}</div>
+                      </div>
+                    </td>
+                    <td className="date-cell">
+                      <div className="exam-date">
+                        <Calendar size={14} />
+                        <span>{new Date(exam.date).toLocaleDateString('fr-FR')}</span>
+                        <Clock size={14} />
+                        <span>{exam.time}</span>
+                      </div>
+                    </td>
+                    <td className="duration-cell">
+                      <div className="exam-duration">
+                        <ClockIcon size={14} />
+                        <span>{exam.duration}</span>
+                      </div>
+                    </td>
+                    <td className="room-cell">
+                      <div className="exam-room">
+                        <MapPin size={14} />
+                        <span>{exam.room}</span>
+                      </div>
+                    </td>
+                    <td className="supervisor-cell">
+                      <div className="exam-supervisor">
+                        <GraduationCap size={14} />
+                        <span>{exam.supervisor}</span>
+                      </div>
+                    </td>
+                    <td className="coefficient-cell">
+                      <span className="exam-coefficient">{exam.coefficient}</span>
+                    </td>
+                    <td>{getTypeBadge(exam.type)}</td>
+                    <td>{getStatusBadge(exam.status)}</td>
+                    <td className="actions-cell">
+                      <div className="exams-actions">
+                        <button className="exams-action-btn view" onClick={() => handleViewDetails(exam)} title="Voir détails">
+                          <Eye size={16} />
+                        </button>
+                        <button className="exams-action-btn edit" onClick={() => handleEdit(exam)} title="Modifier">
+                          <Edit size={16} />
+                        </button>
+                        <button className="exams-action-btn delete" onClick={() => handleDelete(exam.id)} title="Supprimer">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="exams-empty-state">
+              <div className="exams-empty-icon">
+                <BookOpen size={48} />
+              </div>
+              <h4>Aucun examen trouvé</h4>
+              <p>Cliquez sur "Nouvel examen" pour en ajouter un.</p>
             </div>
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label className="form-label">Matière</label>
-                <input type="text" className="form-input" required
-                  value={formData.subject} onChange={(e) => setFormData({...formData, subject: e.target.value})} />
+          )}
+        </div>
+      </div>
+
+      {/* Exam Details Modal */}
+      {showDetails && selectedExam && (
+        <div className="exams-modal-overlay" onClick={() => setShowDetails(false)}>
+          <div className="exams-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="exams-modal-header">
+              <h3>Détails de l'examen</h3>
+              <button className="exams-modal-close" onClick={() => setShowDetails(false)}>
+                <XCircle size={20} />
+              </button>
+            </div>
+            <div className="exams-modal-body">
+              <div className="exam-detail-header">
+                <div className="exam-detail-title">
+                  <BookOpen size={24} />
+                  <div>
+                    <h4>{selectedExam.subject}</h4>
+                    <span>{selectedExam.code}</span>
+                  </div>
+                </div>
+                {getStatusBadge(selectedExam.status)}
               </div>
-              <div className="form-group">
-                <label className="form-label">Classe concernée</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  required
-                  placeholder="Ex: L1 INFO A"
-                  value={formData.className}
-                  onChange={(e) => setFormData({ ...formData, className: e.target.value })}
-                />
+              
+              <div className="exam-detail-grid">
+                <div className="detail-item">
+                  <Calendar size={16} />
+                  <div>
+                    <label>Date</label>
+                    <p>{new Date(selectedExam.date).toLocaleDateString('fr-FR')}</p>
+                  </div>
+                </div>
+                <div className="detail-item">
+                  <Clock size={16} />
+                  <div>
+                    <label>Horaire</label>
+                    <p>{selectedExam.time}</p>
+                  </div>
+                </div>
+                <div className="detail-item">
+                  <ClockIcon size={16} />
+                  <div>
+                    <label>Durée</label>
+                    <p>{selectedExam.duration}</p>
+                  </div>
+                </div>
+                <div className="detail-item">
+                  <MapPin size={16} />
+                  <div>
+                    <label>Salle</label>
+                    <p>{selectedExam.room}</p>
+                  </div>
+                </div>
+                <div className="detail-item">
+                  <GraduationCap size={16} />
+                  <div>
+                    <label>Surveillant</label>
+                    <p>{selectedExam.supervisor}</p>
+                  </div>
+                </div>
+                <div className="detail-item">
+                  <Award size={16} />
+                  <div>
+                    <label>Coefficient</label>
+                    <p>{selectedExam.coefficient}</p>
+                  </div>
+                </div>
+                <div className="detail-item">
+                  <Users size={16} />
+                  <div>
+                    <label>Étudiants inscrits</label>
+                    <p>{selectedExam.registeredStudents || 0}</p>
+                  </div>
+                </div>
+                <div className="detail-item">
+                  <FileText size={16} />
+                  <div>
+                    <label>Note maximale</label>
+                    <p>{selectedExam.maxScore || 100}/100</p>
+                  </div>
+                </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">Date</label>
-                <input type="date" className="form-input" required
-                  value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Durée (ex: 2h)</label>
-                <input type="text" className="form-input" required
-                  value={formData.duration} onChange={(e) => setFormData({...formData, duration: e.target.value})} />
-              </div>
-              <div className="modal-actions">
-                <button type="button" className="btn btn-ghost" onClick={closeModal}>Annuler</button>
-                <button type="submit" className="btn btn-primary">Enregistrer</button>
-              </div>
-            </form>
+              
+              {selectedExam.description && (
+                <div className="exam-description">
+                  <label>Description</label>
+                  <p>{selectedExam.description}</p>
+                </div>
+              )}
+            </div>
+            <div className="exams-modal-footer">
+              <button className="btn-secondary" onClick={() => setShowDetails(false)}>Fermer</button>
+              <button className="btn-primary" onClick={() => {
+                setShowDetails(false);
+                handleEdit(selectedExam);
+              }}>Modifier</button>
+            </div>
           </div>
         </div>
       )}
 
-      {attendanceModalOpen && selectedExam && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ width: 'min(900px, 95vw)' }}>
-            <div className="modal-header">
-              <h2 className="modal-title">Présence - {selectedExam.subject}</h2>
-              <button className="modal-close" onClick={closeAttendanceModal}><X size={20} /></button>
+      {/* Add/Edit Modal */}
+      {showModal && (
+        <div className="exams-modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="exams-modal exams-modal-large" onClick={(e) => e.stopPropagation()}>
+            <div className="exams-modal-header">
+              <h3>{editingExam ? 'Modifier l\'examen' : 'Ajouter un examen'}</h3>
+              <button className="exams-modal-close" onClick={() => setShowModal(false)}>
+                <XCircle size={20} />
+              </button>
             </div>
-
-            <div style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>
-              Classe : {selectedExam.className || 'Non définie'}
-              <div style={{ marginTop: '0.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                <span className="badge badge-success" style={{ width: 'fit-content' }}>
-                  <UserCheck size={12} /> {attendanceStats.presentCount} présent(s)
-                </span>
-                <span className="badge badge-warning" style={{ width: 'fit-content' }}>
-                  <UserX size={12} /> {attendanceStats.absentCount} absent(s)
-                </span>
+            <div className="exams-modal-body">
+              <div className="exams-form-row">
+                <div className="exams-form-group">
+                  <label>Matière *</label>
+                  <input type="text" value={formData.subject} onChange={(e) => setFormData({...formData, subject: e.target.value})} placeholder="Nom de la matière" />
+                </div>
+                <div className="exams-form-group">
+                  <label>Code *</label>
+                  <input type="text" value={formData.code} onChange={(e) => setFormData({...formData, code: e.target.value})} placeholder="Code de l'examen" />
+                </div>
+              </div>
+              <div className="exams-form-row">
+                <div className="exams-form-group">
+                  <label>Date *</label>
+                  <input type="date" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
+                </div>
+                <div className="exams-form-group">
+                  <label>Horaire *</label>
+                  <input type="time" value={formData.time} onChange={(e) => setFormData({...formData, time: e.target.value})} />
+                </div>
+                <div className="exams-form-group">
+                  <label>Durée *</label>
+                  <input type="text" value={formData.duration} onChange={(e) => setFormData({...formData, duration: e.target.value})} placeholder="2h, 1h30..." />
+                </div>
+              </div>
+              <div className="exams-form-row">
+                <div className="exams-form-group">
+                  <label>Salle</label>
+                  <input type="text" value={formData.room} onChange={(e) => setFormData({...formData, room: e.target.value})} placeholder="Salle d'examen" />
+                </div>
+                <div className="exams-form-group">
+                  <label>Surveillant</label>
+                  <input type="text" value={formData.supervisor} onChange={(e) => setFormData({...formData, supervisor: e.target.value})} placeholder="Nom du surveillant" />
+                </div>
+              </div>
+              <div className="exams-form-row">
+                <div className="exams-form-group">
+                  <label>Coefficient</label>
+                  <input type="number" value={formData.coefficient} onChange={(e) => setFormData({...formData, coefficient: e.target.value})} placeholder="Coefficient" />
+                </div>
+                <div className="exams-form-group">
+                  <label>Note maximale</label>
+                  <input type="number" value={formData.maxScore} onChange={(e) => setFormData({...formData, maxScore: e.target.value})} placeholder="100" />
+                </div>
+                <div className="exams-form-group">
+                  <label>Type</label>
+                  <select value={formData.type} onChange={(e) => setFormData({...formData, type: e.target.value})}>
+                    <option value="normal">Normal</option>
+                    <option value="practical">Pratique</option>
+                  </select>
+                </div>
+              </div>
+              <div className="exams-form-group">
+                <label>Description</label>
+                <textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} rows="3" placeholder="Description de l'examen..." />
               </div>
             </div>
-
-            <div className="table-container" style={{ maxHeight: '55vh', overflowY: 'auto' }}>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Étudiant</th>
-                    <th>Email</th>
-                    <th>Présent</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {attendanceDraft.map((entry) => (
-                    <tr key={entry.studentId}>
-                      <td style={{ fontWeight: 500 }}>{entry.studentName}</td>
-                      <td>{entry.studentEmail}</td>
-                      <td>
-                        <label className="flex items-center gap-2" style={{ cursor: 'pointer' }}>
-                          <input
-                            type="checkbox"
-                            checked={entry.present}
-                            onChange={() => toggleAttendance(entry.studentId)}
-                          />
-                          {entry.present ? 'Présent' : 'Absent'}
-                        </label>
-                      </td>
-                    </tr>
-                  ))}
-                  {attendanceDraft.length === 0 && (
-                    <tr>
-                      <td colSpan="3" style={{ textAlign: 'center', padding: '2rem' }}>
-                        Aucun étudiant trouvé pour cette classe.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="modal-actions">
-              <button type="button" className="btn btn-ghost" onClick={closeAttendanceModal}>
-                Annuler
-              </button>
-              <button type="button" className="btn btn-primary" onClick={handleSaveAttendance} disabled={savingAttendance}>
-                Enregistrer la présence
+            <div className="exams-modal-footer">
+              <button className="btn-secondary" onClick={() => setShowModal(false)}>Annuler</button>
+              <button className="btn-primary" onClick={handleSubmit}>
+                {editingExam ? 'Modifier' : 'Ajouter'}
               </button>
             </div>
           </div>
@@ -295,4 +539,3 @@ const ExamsPage = () => {
 };
 
 export default ExamsPage;
-

@@ -1,8 +1,26 @@
 // App.jsx
 import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, BookOpen, MapPin, CalendarCog, FileText, CheckCircle, LogOut, Bell, Search, User, Menu, X, ChevronDown } from 'lucide-react';
+import { 
+  LayoutDashboard, 
+  Users, 
+  BookOpen, 
+  MapPin, 
+  CalendarCog, 
+  FileText, 
+  CheckCircle, 
+  LogOut, 
+  Bell, 
+  Search, 
+  User, 
+  Menu, 
+  X, 
+  ChevronDown,
+  Settings,
+  AlertTriangle
+} from 'lucide-react';
 import { AppProvider, AppContext } from './context/AppContext';
+import { EliminationProvider } from './context/EliminationContext';
 import { Toaster } from 'react-hot-toast';
 import './index.css';
 
@@ -15,9 +33,9 @@ import OrganizationPage from './pages/OrganizationPage';
 import AssignmentPage from './pages/AssignmentPage';
 import GradesPage from './pages/GradesPage';
 import ReportsPage from './pages/ReportsPage';
+import SettingsPage from './pages/SettingsPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
-
 const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const { user, logout } = useContext(AppContext);
   const role = user?.role || 'Student';
@@ -31,6 +49,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     { path: '/assignment', icon: FileText, label: 'Affectation', roles: ['Admin'] },
     { path: '/grades', icon: CheckCircle, label: 'Notes', roles: ['Admin', 'Teacher', 'Student'] },
     { path: '/reports', icon: FileText, label: 'Rapports', roles: ['Admin', 'Teacher'] },
+    { path: '/eliminations', icon: AlertTriangle, label: 'Éliminations', roles: ['Admin', 'Teacher', 'Student'] },
+    { path: '/settings', icon: Settings, label: 'Paramètres', roles: ['Admin', 'Teacher', 'Student'] },
   ];
 
   return (
@@ -154,6 +174,8 @@ const AppContent = () => {
                 <Route path="/Affectation" element={<AssignmentPage />} />
                 <Route path="/grades" element={<GradesPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
+                <Route path="/eliminations" element={<EliminationPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
               </Routes>
             </MainLayout>
           </PrivateRoute>
@@ -166,30 +188,32 @@ const AppContent = () => {
 function App() {
   return (
     <AppProvider>
-      <Toaster 
-        position="top-right" 
-        toastOptions={{
-          style: {
-            borderRadius: '12px',
-            background: '#1E293B',
-            color: '#fff',
-            border: '1px solid rgba(59, 130, 246, 0.2)',
-          },
-          success: {
-            iconTheme: {
-              primary: '#10B981',
-              secondary: '#fff',
+      <EliminationProvider>
+        <Toaster 
+          position="top-right" 
+          toastOptions={{
+            style: {
+              borderRadius: '12px',
+              background: '#1E293B',
+              color: '#fff',
+              border: '1px solid rgba(59, 130, 246, 0.2)',
             },
-          },
-          error: {
-            iconTheme: {
-              primary: '#EF4444',
-              secondary: '#fff',
+            success: {
+              iconTheme: {
+                primary: '#10B981',
+                secondary: '#fff',
+              },
             },
-          },
-        }} 
-      />
-      <AppContent />
+            error: {
+              iconTheme: {
+                primary: '#EF4444',
+                secondary: '#fff',
+              },
+            },
+          }} 
+        />
+        <AppContent />
+      </EliminationProvider>
     </AppProvider>
   );
 }

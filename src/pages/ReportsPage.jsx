@@ -1,83 +1,182 @@
-import React, { useContext, useState } from 'react';
-import { FileText, Download, Printer } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { AppContext } from '../context/AppContext';
+// src/pages/ReportsPage.jsx
+import React, { useState } from 'react';
+import { FileText, Printer, Download, Calendar, Clock, MapPin, User, AlertCircle, CheckCircle, TrendingUp, Filter, Search } from 'lucide-react';
 
 const ReportsPage = () => {
-  const { exams, assignments, users, rooms } = useContext(AppContext);
-  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const exams = [
+    { id: 1, subject: 'Mathématiques', code: 'MATH201', date: '2026-05-15', time: '09:00', duration: '2h', room: 'Non assignée', supervisor: 'Non assigné', status: 'scheduled', students: 45 },
+    { id: 2, subject: 'Physique', code: 'PHY301', date: '2026-05-16', time: '14:00', duration: '1h30', room: 'Non assignée', supervisor: 'Non assigné', status: 'scheduled', students: 32 },
+    { id: 3, subject: 'Informatique', code: 'INF101', date: '2026-05-18', time: '10:00', duration: '3h', room: 'Salle A101', supervisor: 'M. Ben Ali', status: 'scheduled', students: 28 },
+    { id: 4, subject: 'Anglais', code: 'ANG202', date: '2026-05-20', time: '08:30', duration: '1h', room: 'Salle B202', supervisor: 'Mme Martin', status: 'completed', students: 38 },
+  ];
 
-  const handleDownloadPDF = () => {
-    setLoading(true);
-    setTimeout(() => {
-      toast.success("Génération du document PDF en cours...");
-      setLoading(false);
-    }, 1000);
-  };
+  const filteredExams = exams.filter(exam => {
+    const matchesSearch = exam.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          exam.code.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterStatus === 'all' || exam.status === filterStatus;
+    return matchesSearch && matchesFilter;
+  });
+
+  const handlePrint = () => window.print();
+  const handleExportPDF = () => alert('Export PDF en cours de développement');
 
   return (
-    <div>
-      <div className="page-header">
-        <h1 className="page-title">Rapports & Documents</h1>
-        <div className="flex gap-4">
-          <button className="btn btn-ghost" onClick={handlePrint}>
-            <Printer size={18} /> Imprimer
+    <div className="reports-container">
+      {/* Header Section */}
+      <div className="reports-header-section">
+        <div className="reports-header-left">
+          <div className="reports-icon-wrapper">
+            <FileText size={28} />
+          </div>
+          <div>
+            <h1>Rapports & Documents</h1>
+            <p>Gérez et exportez vos rapports d'examens</p>
+          </div>
+        </div>
+        <div className="reports-header-right">
+          <button className="action-btn action-btn-outline" onClick={handlePrint}>
+            <Printer size={16} />
+            Imprimer
           </button>
-          <button className="btn btn-primary" onClick={handleDownloadPDF} disabled={loading}>
-            <Download size={18} /> {loading ? 'Génération...' : 'Exporter PDF'}
+          <button className="action-btn action-btn-primary" onClick={handleExportPDF}>
+            <Download size={16} />
+            Exporter PDF
           </button>
         </div>
       </div>
 
-      <div className="glass-card mb-6" style={{ background: 'var(--surface)' }}>
-        <div className="flex justify-between items-center mb-6">
-          <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <FileText color="var(--primary)" />
-            Planning Officiel des Examens
-          </h2>
-          <span className="badge badge-info flex items-center gap-2" style={{ padding: '0.5rem 1rem' }}>
-            Année Universitaire 2025/2026
-          </span>
+      {/* Stats Cards */}
+      <div className="reports-stats-grid">
+        <div className="report-stat-card">
+          <div className="report-stat-icon blue">
+            <FileText size={20} />
+          </div>
+          <div className="report-stat-info">
+            <span className="report-stat-value">{exams.length}</span>
+            <span className="report-stat-label">Total Examens</span>
+          </div>
         </div>
+        <div className="report-stat-card">
+          <div className="report-stat-icon yellow">
+            <Clock size={20} />
+          </div>
+          <div className="report-stat-info">
+            <span className="report-stat-value">{exams.filter(e => e.status === 'scheduled').length}</span>
+            <span className="report-stat-label">À Venir</span>
+          </div>
+        </div>
+        <div className="report-stat-card">
+          <div className="report-stat-icon green">
+            <CheckCircle size={20} />
+          </div>
+          <div className="report-stat-info">
+            <span className="report-stat-value">{exams.filter(e => e.status === 'completed').length}</span>
+            <span className="report-stat-label">Terminés</span>
+          </div>
+        </div>
+        <div className="report-stat-card">
+          <div className="report-stat-icon purple">
+            <TrendingUp size={20} />
+          </div>
+          <div className="report-stat-info">
+            <span className="report-stat-value">{exams.reduce((acc, e) => acc + e.students, 0)}</span>
+            <span className="report-stat-label">Étudiants</span>
+          </div>
+        </div>
+      </div>
 
-        <div className="table-container" style={{ border: 'none', background: 'transparent' }}>
-          <table>
+      {/* Filters */}
+      <div className="reports-filters">
+        <div className="search-wrapper">
+          <Search size={18} />
+          <input 
+            type="text" 
+            placeholder="Rechercher une matière..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="filter-wrapper">
+          <Filter size={18} />
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+            <option value="all">Tous les statuts</option>
+            <option value="scheduled">Planifiés</option>
+            <option value="completed">Terminés</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Main Table */}
+      <div className="reports-table-wrapper">
+        <div className="table-header">
+          <h3>Planning Officiel des Examens</h3>
+          <span className="academic-badge">2025/2026</span>
+        </div>
+        
+        <div className="reports-table-container">
+          <table className="reports-table">
             <thead>
               <tr>
                 <th>Matière</th>
-                <th>Date Prévue</th>
+                <th>Code</th>
+                <th>Date</th>
+                <th>Horaire</th>
                 <th>Durée</th>
                 <th>Salle</th>
                 <th>Surveillant</th>
+                <th>Étudiants</th>
+                <th>Statut</th>
               </tr>
             </thead>
             <tbody>
-              {exams.map(exam => {
-                const assign = assignments.find(a => a.examId === exam.id);
-                const roomName = assign ? rooms.find(r => r.id === assign.roomId)?.name : 'Non assignée';
-                const supervisorName = assign ? users.find(u => u.id === assign.supervisorId)?.name : 'Non assigné';
-
-                return (
-                  <tr key={exam.id}>
-                    <td style={{ fontWeight: 600 }}>{exam.subject}</td>
-                    <td>{exam.date}</td>
-                    <td>{exam.duration}</td>
-                    <td>{roomName || 'En attente'}</td>
-                    <td>{supervisorName || 'En attente'}</td>
-                  </tr>
-                );
-              })}
-              {exams.length === 0 && (
-                <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>Aucun examen à afficher au planning.</td>
+              {filteredExams.map((exam) => (
+                <tr key={exam.id}>
+                  <td className="subject-cell">{exam.subject}</td>
+                  <td className="code-cell">{exam.code}</td>
+                  <td>{new Date(exam.date).toLocaleDateString('fr-FR')}</td>
+                  <td>{exam.time}</td>
+                  <td>{exam.duration}</td>
+                  <td>
+                    {exam.room === 'Non assignée' ? (
+                      <span className="unassigned-badge">
+                        <AlertCircle size={12} />
+                        À assigner
+                      </span>
+                    ) : (
+                      <span className="room-badge">{exam.room}</span>
+                    )}
+                  </td>
+                  <td>{exam.supervisor}</td>
+                  <td className="students-cell">{exam.students}</td>
+                  <td>
+                    <span className={`status-indicator status-${exam.status}`}>
+                      {exam.status === 'scheduled' ? 'Planifié' : 'Terminé'}
+                    </span>
+                  </td>
                 </tr>
-              )}
+              ))}
             </tbody>
-          </table>
+           </table>
+        </div>
+
+        {/* Footer */}
+        <div className="reports-footer">
+          <div className="footer-stats">
+            <span className="footer-stat">
+              <FileText size={14} />
+              {filteredExams.length} examens affichés
+            </span>
+            <span className="footer-stat">
+              <Calendar size={14} />
+              Généré le {new Date().toLocaleDateString('fr-FR')}
+            </span>
+          </div>
+          <div className="footer-note">
+            Document officiel - Planning des examens
+          </div>
         </div>
       </div>
     </div>
@@ -85,4 +184,3 @@ const ReportsPage = () => {
 };
 
 export default ReportsPage;
-
