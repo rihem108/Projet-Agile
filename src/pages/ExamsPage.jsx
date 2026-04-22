@@ -15,7 +15,9 @@ const ExamsPage = () => {
   const [formData, setFormData] = useState({ id: null, subject: '', className: '', date: '', duration: '' });
 
   const visibleExams = user?.role === 'Teacher'
-    ? exams.filter(exam => assignments.some(a => a.examId === exam.id && a.supervisorId === user.id))
+    ? exams.filter(exam => 
+        String(exam.createdBy || '') === String(user.id) || assignments.some(a => a.examId === exam.id && a.supervisorId === user.id)
+      )
     : exams;
   const emptyColSpan = 4 + (user?.role === 'Teacher' ? 1 : 0) + (canEdit ? 1 : 0);
 

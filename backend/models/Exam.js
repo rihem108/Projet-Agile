@@ -5,6 +5,7 @@ const ExamSchema = new mongoose.Schema({
   className: { type: String, required: true, trim: true },
   date: { type: String, required: true },
   duration: { type: String, required: true },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   attendance: [{
     studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     present: { type: Boolean, default: true }

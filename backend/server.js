@@ -123,10 +123,15 @@ app.get('/api/exams', async (req, res) => {
 
     if (req.user?.role === 'Teacher') {
       const assignedExamIds = await Assignment.distinct('examId', { supervisorId: req.user.id });
-      if (!assignedExamIds.length) {
+      const exams = await Exam.find({
+        $or: [
+          { _id: { $in: assignedExamIds } },
+          { createdBy: req.user.id }
+        ]
+      });
+      if (!exams.length) {
         return res.json([]);
       }
-      const exams = await Exam.find({ _id: { $in: assignedExamIds } });
       return res.json(exams);
     }
 
@@ -142,7 +147,8 @@ app.post('/api/exams', async (req, res) => {
     subject,
     className: String(className || '').trim(),
     date,
-    duration
+    duration,
+    createdBy: req.user?.id
   });
   await exam.save();
   res.json(exam);
