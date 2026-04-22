@@ -33,6 +33,7 @@ import OrganizationPage from './pages/OrganizationPage';
 import AssignmentPage from './pages/AssignmentPage';
 import GradesPage from './pages/GradesPage';
 import ReportsPage from './pages/ReportsPage';
+import EliminationPage from './pages/EliminationPage';
 import SettingsPage from './pages/SettingsPage';
 import Login from './pages/Login';
 import Register from './pages/Register';

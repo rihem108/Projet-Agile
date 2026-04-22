@@ -48,7 +48,7 @@ const Login = () => {
 
     setLoading(true);
 
-    await login(email, password);
+    await login(email, password, selectedRole);
     setLoading(false);
   };
 
