@@ -64,11 +64,19 @@ export const AppProvider = ({ children }) => {
       localStorage.setItem('token', res.token);
       setIsAuthenticated(true);
       setUser(res.user);
+<<<<<<< HEAD
       toast.success(`Bienvenue ${res.user.name || role} !`);
       return true;
     } catch (err) {
       console.error(err);
       toast.error(err.message || "Identifiants incorrects ou erreur serveur");
+=======
+      toast.success("Connexion réussie !");
+      return true;
+    } catch (err) {
+      console.error(err);
+      toast.error("Identifiants incorrects ou erreur serveur");
+>>>>>>> a87e3539c11f6a5f932a37a24f9b076e315bf0af
       return false;
     }
   };

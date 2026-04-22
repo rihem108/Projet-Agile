@@ -14,3 +14,19 @@ The React Compiler is not enabled on this template because of its impact on dev 
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+## Project Login Notes (Development)
+
+This project uses backend authentication at `http://localhost:5000/api/auth/login`.
+
+If all accounts return `400 Bad Request`, seed the backend database once:
+
+1. Start backend server from the `backend` folder.
+2. Open `http://localhost:5000/api/seed` in your browser (or call it with Postman).
+
+After seeding, test with one of these accounts (password is always `123456`):
+
+- `admin@exam.com`
+- `alice@exam.com`
+- `bob@exam.com`
+- `charlie@exam.com`
