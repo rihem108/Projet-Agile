@@ -1,0 +1,9 @@
+/* ==================== PAGE HEADER DARK MODE ==================== */
+.dark-mode .page-header h1 {
+  color: var(--text-white);
+}
+
+.dark-mode .page-header p {
+  color: #94A3B8;
+}
+

@@ -1,0 +1,40 @@
+/* ==================== DARK MODE STYLES - COMPLETE ==================== */
+.dark-mode {
+  --primary-blue: #3B82F6;
+  --primary-blue-dark: #2563EB;
+  --primary-blue-light: #60A5FA;
+  --primary-yellow: #F59E0B;
+  --primary-yellow-light: #FBBF24;
+  --primary-yellow-dark: #D97706;
+  --success: #10B981;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --info: #3B82F6;
+  --dark: #0F172A;
+  --dark-light: #1E293B;
+  --gray: #94A3B8;
+  --gray-light: #64748B;
+  --gray-bg: #1E293B;
+  --white: #0F172A;
+  --border: #334155;
+  --card-bg: #1E293B;
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-white: #FFFFFF;
+}
+
+/* Dark mode body and main backgrounds */
+.dark-mode,
+.dark-mode body {
+  background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
+  color: var(--text-primary);
+}
+
+.dark-mode .app-container {
+  background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
+}
+
+.dark-mode .main-content {
+  background: transparent;
+}
+

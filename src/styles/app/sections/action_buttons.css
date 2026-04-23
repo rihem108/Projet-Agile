@@ -1,0 +1,42 @@
+/* ==================== ACTION BUTTONS ==================== */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  padding: 6px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn.edit {
+  color: var(--primary-blue);
+}
+
+.action-btn.edit:hover {
+  background: #DBEAFE;
+}
+
+.action-btn.delete {
+  color: var(--danger);
+}
+
+.action-btn.delete:hover {
+  background: #FEE2E2;
+}
+
+.action-btn.view {
+  color: var(--success);
+}
+
+.action-btn.view:hover {
+  background: #D1FAE5;
+}
+

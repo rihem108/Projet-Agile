@@ -1,0 +1,35 @@
+/* ==================== MODAL DARK MODE ==================== */
+.dark-mode .modal-overlay {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.dark-mode .modal {
+  background: #1E293B;
+  border: 1px solid #334155;
+}
+
+.dark-mode .modal-header {
+  border-bottom-color: #334155;
+}
+
+.dark-mode .modal-header h3 {
+  color: var(--text-white);
+}
+
+.dark-mode .modal-close {
+  color: #94A3B8;
+}
+
+.dark-mode .modal-close:hover {
+  background: #334155;
+  color: var(--text-white);
+}
+
+.dark-mode .modal-footer {
+  border-top-color: #334155;
+}
+
+.dark-mode .modal-body {
+  color: #CBD5E1;
+}
+

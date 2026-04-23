@@ -1,0 +1,23 @@
+/* ==================== FILTER BAR DARK MODE ==================== */
+.dark-mode .filter-bar {
+  background: #1E293B;
+  border-color: #334155;
+}
+
+.dark-mode .filter-group {
+  background: #0F172A;
+}
+
+.dark-mode .filter-group svg {
+  color: #64748B;
+}
+
+.dark-mode .filter-group input,
+.dark-mode .filter-group select {
+  color: var(--text-white);
+}
+
+.dark-mode .filter-group input::placeholder {
+  color: #64748B;
+}
+

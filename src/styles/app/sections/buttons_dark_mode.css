@@ -1,0 +1,21 @@
+/* ==================== BUTTONS DARK MODE ==================== */
+.dark-mode .btn-primary {
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
+  color: var(--text-white);
+}
+
+.dark-mode .btn-secondary {
+  background: #334155;
+  color: var(--text-white);
+  border-color: #475569;
+}
+
+.dark-mode .btn-secondary:hover {
+  background: #475569;
+}
+
+.dark-mode .btn-danger {
+  background: linear-gradient(135deg, #EF4444, #DC2626);
+  color: var(--text-white);
+}
+

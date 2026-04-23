@@ -1,0 +1,22 @@
+/* ==================== TABLES DARK MODE ==================== */
+.dark-mode .table-container {
+  background: #1E293B;
+  border-color: #334155;
+}
+
+.dark-mode th {
+  background: #0F172A;
+  color: #94A3B8;
+  border-bottom-color: #334155;
+}
+
+.dark-mode td {
+  color: #CBD5E1;
+  border-bottom-color: #334155;
+}
+
+.dark-mode tr:hover td {
+  background: #334155;
+  color: var(--text-white);
+}
+

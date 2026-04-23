@@ -1,0 +1,167 @@
+/* ==================== SETTINGS PAGE DARK MODE ==================== */
+.dark-mode .settings-sidebar {
+  background: #1E293B;
+  border-color: #334155;
+}
+
+.dark-mode .settings-tab {
+  color: #94A3B8;
+}
+
+.dark-mode .settings-tab:hover {
+  background: #334155;
+  color: var(--text-white);
+}
+
+.dark-mode .settings-tab.active {
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
+  color: var(--text-white);
+}
+
+.dark-mode .settings-section {
+  background: #1E293B;
+  border-color: #334155;
+}
+
+.dark-mode .section-header {
+  border-bottom-color: #334155;
+}
+
+.dark-mode .section-header h2 {
+  color: var(--text-white);
+}
+
+.dark-mode .section-header p {
+  color: #94A3B8;
+}
+
+.dark-mode .edit-btn {
+  background: #334155;
+  color: #60A5FA;
+}
+
+.dark-mode .edit-btn:hover {
+  background: #475569;
+  color: #93C5FD;
+}
+
+.dark-mode .cancel-btn {
+  background: rgba(239, 68, 68, 0.2);
+  color: #F87171;
+}
+
+.dark-mode .cancel-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+/* Profile View Dark Mode */
+.dark-mode .profile-avatar-large {
+  color: var(--text-white);
+}
+
+.dark-mode .info-row label {
+  color: #94A3B8;
+}
+
+.dark-mode .info-row p {
+  color: var(--text-white);
+}
+
+/* Security Cards Dark Mode */
+.dark-mode .security-card {
+  background: #0F172A;
+  border-color: #334155;
+}
+
+.dark-mode .security-card .card-icon {
+  color: #60A5FA;
+}
+
+.dark-mode .security-card .card-content h3 {
+  color: var(--text-white);
+}
+
+.dark-mode .security-card .card-content p {
+  color: #94A3B8;
+}
+
+/* Password Form Dark Mode */
+.dark-mode .password-form {
+  border-top-color: #334155;
+}
+
+.dark-mode .password-toggle {
+  color: #94A3B8;
+}
+
+.dark-mode .password-toggle:hover {
+  color: #60A5FA;
+}
+
+/* Session Info Dark Mode */
+.dark-mode .session-info {
+  border-top-color: #334155;
+}
+
+.dark-mode .session-info h3 {
+  color: var(--text-white);
+}
+
+.dark-mode .session-item {
+  background: #0F172A;
+}
+
+.dark-mode .session-item p {
+  color: var(--text-white);
+}
+
+.dark-mode .session-item span {
+  color: #94A3B8;
+}
+
+.dark-mode .current-badge {
+  color: var(--text-white);
+}
+
+/* Notifications Dark Mode */
+.dark-mode .notification-item {
+  background: #0F172A;
+  border-color: #334155;
+}
+
+.dark-mode .notification-info svg {
+  color: #60A5FA;
+}
+
+.dark-mode .notification-info h4 {
+  color: var(--text-white);
+}
+
+.dark-mode .notification-info p {
+  color: #94A3B8;
+}
+
+/* Appearance Card Dark Mode */
+.dark-mode .appearance-card {
+  background: #0F172A;
+}
+
+.dark-mode .preview-label {
+  color: #60A5FA;
+}
+
+/* Option Group Dark Mode */
+.dark-mode .option-group {
+  border-bottom-color: #334155;
+}
+
+.dark-mode .option-group label {
+  color: var(--text-white);
+}
+
+.dark-mode .option-group select {
+  background: #0F172A;
+  color: var(--text-white);
+  border-color: #334155;
+}
+

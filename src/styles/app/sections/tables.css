@@ -1,0 +1,36 @@
+/* ==================== TABLES ==================== */
+.table-container {
+  background: white;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  overflow-x: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+
+th {
+  text-align: left;
+  padding: 16px 20px;
+  background: #F8FAFC;
+  color: var(--gray);
+  font-weight: 600;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+
+td {
+  padding: 14px 20px;
+  color: var(--dark);
+  font-size: 14px;
+  border-bottom: 1px solid var(--gray-bg);
+}
+
+tr:hover td {
+  background: #F8FAFC;
+}
+

@@ -1,0 +1,25 @@
+/* ==================== ACTION BUTTONS DARK MODE ==================== */
+.dark-mode .action-btn.edit {
+  color: #60A5FA;
+}
+
+.dark-mode .action-btn.edit:hover {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.dark-mode .action-btn.delete {
+  color: #F87171;
+}
+
+.dark-mode .action-btn.delete:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.dark-mode .action-btn.view {
+  color: #34D399;
+}
+
+.dark-mode .action-btn.view:hover {
+  background: rgba(16, 185, 129, 0.2);
+}
+

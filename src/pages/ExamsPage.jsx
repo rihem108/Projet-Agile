@@ -26,7 +26,8 @@ import { AppContext } from '../context/AppContext';
 import toast from 'react-hot-toast';
 
 const ExamsPage = () => {
-  const { exams, addExam, updateExam, deleteExam } = useContext(AppContext);
+  const { exams, addExam, updateExam, deleteExam, user, assignments } = useContext(AppContext);
+  const [localExams, setLocalExams] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
@@ -49,11 +50,12 @@ const ExamsPage = () => {
     description: ''
   });
 
+  const canEdit = user?.role === 'Admin' || user?.role === 'Teacher';
   const visibleExams = user?.role === 'Teacher'
-    ? exams.filter(exam => 
+    ? localExams.filter(exam => 
         String(exam.createdBy || '') === String(user.id) || assignments.some(a => a.examId === exam.id && a.supervisorId === user.id)
       )
-    : exams;
+    : localExams;
   const emptyColSpan = 4 + (user?.role === 'Teacher' ? 1 : 0) + (canEdit ? 1 : 0);
 
   useEffect(() => {
@@ -62,7 +64,7 @@ const ExamsPage = () => {
     }
   }, [exams]);
 
-  const filteredExams = localExams.filter(exam => {
+  const filteredExams = visibleExams.filter(exam => {
     const matchesSearch = exam.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           exam.code.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || exam.status === filterStatus;
@@ -71,11 +73,11 @@ const ExamsPage = () => {
   });
 
   const stats = {
-    total: localExams.length,
-    scheduled: localExams.filter(e => e.status === 'scheduled').length,
-    ongoing: localExams.filter(e => e.status === 'ongoing').length,
-    completed: localExams.filter(e => e.status === 'completed').length,
-    totalStudents: localExams.reduce((acc, e) => acc + (e.registeredStudents || 0), 0),
+    total: visibleExams.length,
+    scheduled: visibleExams.filter(e => e.status === 'scheduled').length,
+    ongoing: visibleExams.filter(e => e.status === 'ongoing').length,
+    completed: visibleExams.filter(e => e.status === 'completed').length,
+    totalStudents: visibleExams.reduce((acc, e) => acc + (e.registeredStudents || 0), 0),
   };
 
   const handleAdd = () => {
@@ -287,7 +289,7 @@ const ExamsPage = () => {
                   <th>Coeff</th>
                   <th>Type</th>
                   <th>Statut</th>
-                  <th>Actions</th>
+                  <th className="exams-actions-header">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -330,7 +332,7 @@ const ExamsPage = () => {
                     </td>
                     <td>{getTypeBadge(exam.type)}</td>
                     <td>{getStatusBadge(exam.status)}</td>
-                    <td className="actions-cell">
+                    <td className="exams-actions-cell">
                       <div className="exams-actions">
                         <button className="exams-action-btn view" onClick={() => handleViewDetails(exam)} title="Voir détails">
                           <Eye size={16} />

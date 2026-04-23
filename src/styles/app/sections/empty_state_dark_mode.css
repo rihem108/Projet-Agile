@@ -1,0 +1,14 @@
+/* ==================== EMPTY STATE DARK MODE ==================== */
+.dark-mode .empty-state h3 {
+  color: var(--text-white);
+}
+
+.dark-mode .empty-state p {
+  color: #94A3B8;
+}
+
+.dark-mode .empty-icon {
+  background: #334155;
+  color: #64748B;
+}
+

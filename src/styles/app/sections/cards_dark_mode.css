@@ -1,0 +1,31 @@
+/* ==================== CARDS DARK MODE ==================== */
+.dark-mode .stat-card,
+.dark-mode .card {
+  background: #1E293B;
+  border-color: #334155;
+}
+
+.dark-mode .stat-card:hover {
+  box-shadow: 0 12px 24px -12px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .stat-icon {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.dark-mode .stat-value {
+  color: var(--text-white);
+}
+
+.dark-mode .stat-label {
+  color: #94A3B8;
+}
+
+.dark-mode .stat-change.positive {
+  color: #34D399;
+}
+
+.dark-mode .stat-change.negative {
+  color: #F87171;
+}
+

@@ -21,6 +21,7 @@ import {
 import { AppContext } from '../context/AppContext';
 import { useElimination } from '../context/EliminationContext';
 import toast from 'react-hot-toast';
+import './EliminationPage.css';
 
 const EliminationPage = () => {
   const { user, users, exams, grades } = useContext(AppContext);

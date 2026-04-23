@@ -1,9 +1,9 @@
 require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const express = require('express'); // Framework web pour créer l'API REST
+const mongoose = require('mongoose'); // ODM pour interagir avec MongoDB de manière plus facile et structurée
+const cors = require('cors'); // Middleware pour permettre les requêtes cross-origin (entre le frontend et le backend)
+const bcrypt = require('bcryptjs'); // Bibliothèque pour hasher les mots de passe de manière sécurisée
+const jwt = require('jsonwebtoken'); // Bibliothèque pour créer et vérifier les JSON Web Tokens (JWT) utilisés pour l'authentification
 
 const User = require('./models/User');
 const Exam = require('./models/Exam');

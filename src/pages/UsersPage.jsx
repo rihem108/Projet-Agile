@@ -288,7 +288,7 @@ const UsersPage = () => {
                   <th>Rôle</th>
                   <th>Statut</th>
                   <th>Date d'adhésion</th>
-                  <th>Actions</th>
+                  <th className="users-actions-header">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -316,7 +316,7 @@ const UsersPage = () => {
                     <td>{getRoleBadge(user.role)}</td>
                     <td>{getStatusBadge(user.status)}</td>
                     <td className="date-cell">{user.joinDate || '2024-01-01'}</td>
-                    <td className="actions-cell">
+                    <td className="users-actions-cell">
                       <div className="users-actions">
                         <button className="users-action-btn view" onClick={() => handleViewDetails(user)} title="Voir détails">
                           <Eye size={16} />

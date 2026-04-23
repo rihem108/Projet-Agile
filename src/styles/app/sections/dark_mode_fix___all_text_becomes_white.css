@@ -1,0 +1,184 @@
+/* ==================== DARK MODE FIX - ALL TEXT BECOMES WHITE ==================== */
+.dark-mode .modern-card,
+.dark-mode .settings-modern-sidebar {
+  background: #1E293B;
+  border-color: #334155;
+}
+
+.dark-mode .info-modern-card,
+.dark-mode .feature-card,
+.dark-mode .notification-modern-item,
+.dark-mode .device-card {
+  background: #0F172A;
+}
+
+.dark-mode .card-title h2,
+.dark-mode .card-title p,
+.dark-mode .info-modern-card p,
+.dark-mode .feature-content h3,
+.dark-mode .feature-content p,
+.dark-mode .notif-info h4,
+.dark-mode .notif-info p,
+.dark-mode .device-card p,
+.dark-mode .device-card span,
+.dark-mode .option-modern label,
+.dark-mode .option-modern p,
+.dark-mode .session-modern h3,
+.dark-mode .form-group-modern label,
+.dark-mode .avatar-inner {
+  color: white !important;
+}
+
+.dark-mode .info-icon {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60A5FA;
+}
+
+.dark-mode .info-modern-card label {
+  color: #94A3B8 !important;
+}
+
+.dark-mode .form-group-modern input,
+.dark-mode .form-group-modern textarea,
+.dark-mode .password-input-modern input,
+.dark-mode .option-modern select {
+  background: #0F172A;
+  color: white;
+  border-color: #334155;
+}
+
+.dark-mode .form-group-modern input::placeholder,
+.dark-mode .password-input-modern input::placeholder {
+  color: #64748B;
+}
+
+.dark-mode .theme-preview {
+  background: #0F172A;
+}
+
+.dark-mode .theme-label {
+  color: #60A5FA;
+}
+
+.dark-mode .preview-window.dark {
+  background: #0F172A;
+}
+
+.dark-mode .feature-toggle {
+  background: #334155;
+}
+
+.dark-mode .feature-toggle.active {
+  background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+}
+
+.dark-mode .modern-toggle .toggle-track {
+  background: #334155;
+}
+
+.dark-mode .modern-toggle input:checked + .toggle-track {
+  background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+}
+
+.dark-mode .glow-button.edit {
+  background: linear-gradient(135deg, #2563EB, #6D28D9);
+}
+
+.dark-mode .glow-button.cancel {
+  background: rgba(239, 68, 68, 0.2);
+  color: #F87171;
+}
+
+.dark-mode .save-button {
+  background: linear-gradient(135deg, #2563EB, #6D28D9);
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+  .settings-modern-container {
+    flex-direction: column;
+  }
+  
+  .settings-modern-sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+  
+  .modern-tab {
+    min-width: 130px;
+  }
+  
+  .profile-modern-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+    padding: 20px;
+  }
+  
+  .form-group-modern.full-width {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .settings-hero {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .settings-hero-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .card-header-glow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .notification-modern-item {
+    flex-wrap: wrap;
+  }
+  
+  .option-modern {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .option-modern select {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .avatar-ring {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .avatar-inner {
+    font-size: 32px;
+  }
+  
+  .feature-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .notification-modern-item {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .notif-icon {
+    margin: 0 auto;
+  }
+  
+  .modern-toggle {
+    margin: 0 auto;
+  }
+}

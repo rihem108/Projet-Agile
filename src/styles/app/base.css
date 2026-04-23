@@ -1,0 +1,41 @@
+/* App.css - Complete Professional Theme with Full Dark Mode */
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary-blue: #3B82F6;
+  --primary-blue-dark: #2563EB;
+  --primary-blue-light: #60A5FA;
+  --primary-yellow: #F59E0B;
+  --primary-yellow-light: #FBBF24;
+  --primary-yellow-dark: #D97706;
+  --success: #10B981;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --info: #3B82F6;
+  --dark: #0F172A;
+  --dark-light: #1E293B;
+  --gray: #64748B;
+  --gray-light: #94A3B8;
+  --gray-bg: #F1F5F9;
+  --white: #FFFFFF;
+  --border: #E2E8F0;
+  --card-bg: #FFFFFF;
+  --text-primary: #0F172A;
+  --text-secondary: #64748B;
+  --text-white: #FFFFFF;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+

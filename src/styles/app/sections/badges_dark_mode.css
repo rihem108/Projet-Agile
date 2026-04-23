@@ -1,0 +1,21 @@
+/* ==================== BADGES DARK MODE ==================== */
+.dark-mode .badge-success {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34D399;
+}
+
+.dark-mode .badge-warning {
+  background: rgba(245, 158, 11, 0.2);
+  color: #FBBF24;
+}
+
+.dark-mode .badge-info {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60A5FA;
+}
+
+.dark-mode .badge-danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #F87171;
+}
+

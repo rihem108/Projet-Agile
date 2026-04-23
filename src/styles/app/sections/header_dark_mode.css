@@ -1,0 +1,53 @@
+/* ==================== HEADER DARK MODE ==================== */
+.dark-mode .header {
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark-mode .menu-toggle {
+  color: #94A3B8;
+}
+
+.dark-mode .menu-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #60A5FA;
+}
+
+.dark-mode .search-bar {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dark-mode .search-bar input {
+  color: var(--text-white);
+}
+
+.dark-mode .search-bar input::placeholder {
+  color: #64748B;
+}
+
+.dark-mode .search-bar svg {
+  color: #64748B;
+}
+
+.dark-mode .notification-btn {
+  color: #94A3B8;
+}
+
+.dark-mode .notification-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #60A5FA;
+}
+
+.dark-mode .user-profile:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dark-mode .user-name {
+  color: var(--text-white);
+}
+
+.dark-mode .user-role {
+  color: #94A3B8;
+}
+

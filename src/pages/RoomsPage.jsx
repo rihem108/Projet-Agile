@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import toast from 'react-hot-toast';
+import './RoomsPage.css';
 
 const RoomsPage = () => {
   const { rooms, addRoom, updateRoom, deleteRoom } = useContext(AppContext);
@@ -332,7 +333,7 @@ const RoomsPage = () => {
                   <th>Équipements</th>
                   <th>Prochain examen</th>
                   <th>Statut</th>
-                  <th>Actions</th>
+                  <th className="rooms-actions-header">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -381,7 +382,7 @@ const RoomsPage = () => {
                       )}
                     </td>
                     <td>{getStatusBadge(room.status)}</td>
-                    <td className="actions-cell">
+                    <td className="rooms-actions-cell">
                       <div className="rooms-actions">
                         <button className="rooms-action-btn view" onClick={() => handleViewDetails(room)} title="Voir détails">
                           <Eye size={16} />

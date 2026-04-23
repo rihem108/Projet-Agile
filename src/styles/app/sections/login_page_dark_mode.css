@@ -1,0 +1,79 @@
+/* ==================== LOGIN PAGE DARK MODE ==================== */
+.dark-mode .login-page {
+  background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
+}
+
+.dark-mode .login-container-glass {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(20px);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .brand-section {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 27, 75, 0.8));
+}
+
+.dark-mode .form-section {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.dark-mode .stats-showcase,
+.dark-mode .contact-info-glass {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark-mode .contact-item {
+  color: #CBD5E1;
+}
+
+.dark-mode .stat-number {
+  background: linear-gradient(135deg, #FFFFFF, #93C5FD);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.dark-mode .stat-label {
+  color: #94A3B8;
+}
+
+.dark-mode .contact-header span {
+  color: var(--text-white);
+}
+
+.dark-mode .form-header-glass h2 {
+  color: var(--text-white);
+}
+
+.dark-mode .form-header-glass p {
+  color: #94A3B8;
+}
+
+.dark-mode .welcome-badge span {
+  color: transparent;
+}
+
+.dark-mode .role-card .role-card-label {
+  color: #94A3B8;
+}
+
+.dark-mode .role-card.active .role-card-label {
+  color: var(--text-white);
+}
+
+.dark-mode .checkbox-glass {
+  color: #94A3B8;
+}
+
+.dark-mode .forgot-link-glass {
+  color: #60A5FA;
+}
+
+.dark-mode .demo-divider span {
+  color: #94A3B8;
+}
+
+.dark-mode .demo-btn {
+  color: var(--text-white);
+}

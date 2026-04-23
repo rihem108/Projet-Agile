@@ -1,0 +1,10 @@
+/* ==================== LOADING DARK MODE ==================== */
+.dark-mode .loading-spinner {
+  color: var(--text-white);
+}
+
+.dark-mode .spinner {
+  border-color: #334155;
+  border-top-color: #3B82F6;
+}
+

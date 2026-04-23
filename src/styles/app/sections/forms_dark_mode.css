@@ -1,0 +1,26 @@
+/* ==================== FORMS DARK MODE ==================== */
+.dark-mode .form-group label {
+  color: #CBD5E1;
+}
+
+.dark-mode .form-input,
+.dark-mode .form-select,
+.dark-mode .form-textarea {
+  background: #0F172A;
+  border-color: #334155;
+  color: var(--text-white);
+}
+
+.dark-mode .form-input:focus,
+.dark-mode .form-select:focus,
+.dark-mode .form-textarea:focus {
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.dark-mode .form-input::placeholder,
+.dark-mode .form-select::placeholder,
+.dark-mode .form-textarea::placeholder {
+  color: #64748B;
+}
+

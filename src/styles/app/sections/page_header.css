@@ -1,0 +1,17 @@
+/* ==================== PAGE HEADER ==================== */
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 8px;
+}
+
+.page-header p {
+  color: var(--gray);
+  font-size: 14px;
+}
+
