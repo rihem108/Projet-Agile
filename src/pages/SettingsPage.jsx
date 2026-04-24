@@ -20,7 +20,7 @@ import {
   EyeOff,
   X,
   LogOut,
-  Sparkles,
+  Camera,
   Rocket,
   Shield,
   Zap,
@@ -33,9 +33,13 @@ import toast from 'react-hot-toast';
 
 const SettingsPage = () => {
   const { user, updateProfile, logout } = useContext(AppContext);
+  const profileImageStorageKey = `profileImage:${user?.id || user?._id || user?.email || 'current'}`;
   const [darkMode, setDarkMode] = useState(localStorage.getItem('darkMode') === 'true');
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
+  const [profileImage, setProfileImage] = useState(() => (
+    localStorage.getItem(profileImageStorageKey) || user?.avatar || user?.profileImage || ''
+  ));
   
   const [profileForm, setProfileForm] = useState({
     name: user?.name || 'Alex Johnson',
@@ -76,6 +80,11 @@ const SettingsPage = () => {
     }
   }, [darkMode]);
 
+  useEffect(() => {
+    const persistedImage = localStorage.getItem(profileImageStorageKey) || user?.avatar || user?.profileImage || '';
+    setProfileImage(persistedImage);
+  }, [profileImageStorageKey, user?.avatar, user?.profileImage]);
+
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
@@ -115,6 +124,45 @@ const SettingsPage = () => {
     toast.success(value ? '🔔 Notification activée' : '🔕 Notification désactivée');
   };
 
+  const handleProfileImageUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('⚠️ Veuillez sélectionner une image valide.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('⚠️ L\'image doit être inférieure à 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const imageDataUrl = typeof reader.result === 'string' ? reader.result : '';
+      if (!imageDataUrl) return;
+
+      setProfileImage(imageDataUrl);
+      localStorage.setItem(profileImageStorageKey, imageDataUrl);
+      window.dispatchEvent(new CustomEvent('profile-image-updated', {
+        detail: { key: profileImageStorageKey, image: imageDataUrl }
+      }));
+      toast.success('📸 Photo de profil mise à jour !');
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+  };
+
+  const handleRemoveProfileImage = () => {
+    setProfileImage('');
+    localStorage.removeItem(profileImageStorageKey);
+    window.dispatchEvent(new CustomEvent('profile-image-updated', {
+      detail: { key: profileImageStorageKey, image: '' }
+    }));
+    toast.success('🗑️ Photo de profil supprimée.');
+  };
+
   const tabs = [
     { id: 'profile', label: 'Profil', icon: User, color: '#3B82F6', bg: 'rgba(59,130,246,0.1)' },
     { id: 'security', label: 'Sécurité', icon: Shield, color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)' },
@@ -134,10 +182,6 @@ const SettingsPage = () => {
             <h1>Paramètres</h1>
             <p>Personnalisez votre expérience</p>
           </div>
-        </div>
-        <div className="hero-badge">
-          <Sparkles size={16} />
-          <span>Compte Premium</span>
         </div>
       </div>
 
@@ -196,13 +240,29 @@ const SettingsPage = () => {
                   <div className="avatar-modern">
                     <div className="avatar-ring">
                       <div className="avatar-inner">
-                        {profileForm.name?.[0]?.toUpperCase() || 'U'}
+                        {profileImage ? (
+                          <img src={profileImage} alt="Photo de profil" className="avatar-image" />
+                        ) : (
+                          profileForm.name?.[0]?.toUpperCase() || 'U'
+                        )}
                       </div>
                     </div>
-                    <div className="avatar-badge">
-                      <Crown size={12} />
-                    </div>
+                    <label className="avatar-upload-badge" htmlFor="profile-image-upload" title="Téléverser une photo">
+                      <Camera size={12} />
+                    </label>
+                    <input
+                      id="profile-image-upload"
+                      type="file"
+                      accept="image/*"
+                      className="avatar-upload-input"
+                      onChange={handleProfileImageUpload}
+                    />
                   </div>
+                  {profileImage && (
+                    <button type="button" className="avatar-remove-button" onClick={handleRemoveProfileImage}>
+                      Supprimer la photo
+                    </button>
+                  )}
                   <div className="profile-modern-grid">
                     <div className="info-modern-card">
                       <div className="info-icon"><User size={16} /></div>

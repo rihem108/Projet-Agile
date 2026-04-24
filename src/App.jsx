@@ -1,5 +1,5 @@
 // App.jsx
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -91,6 +91,34 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
 
 const Header = ({ sidebarOpen, setSidebarOpen }) => {
   const { user } = useContext(AppContext);
+  const profileImageStorageKey = `profileImage:${user?.id || user?._id || user?.email || 'current'}`;
+  const [headerProfileImage, setHeaderProfileImage] = useState(() => (
+    localStorage.getItem(profileImageStorageKey) || user?.avatar || user?.profileImage || ''
+  ));
+
+  useEffect(() => {
+    const syncProfileImage = () => {
+      setHeaderProfileImage(localStorage.getItem(profileImageStorageKey) || user?.avatar || user?.profileImage || '');
+    };
+
+    syncProfileImage();
+
+    const handleProfileImageUpdated = (event) => {
+      if (event?.detail?.key === profileImageStorageKey) {
+        setHeaderProfileImage(event.detail.image || '');
+        return;
+      }
+      syncProfileImage();
+    };
+
+    window.addEventListener('profile-image-updated', handleProfileImageUpdated);
+    window.addEventListener('storage', syncProfileImage);
+
+    return () => {
+      window.removeEventListener('profile-image-updated', handleProfileImageUpdated);
+      window.removeEventListener('storage', syncProfileImage);
+    };
+  }, [profileImageStorageKey, user?.avatar, user?.profileImage]);
   
   return (
     <header className="header">
@@ -115,7 +143,11 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
         
         <div className="user-profile">
           <div className="user-avatar">
-            {user?.name?.[0] || 'A'}
+            {headerProfileImage ? (
+              <img src={headerProfileImage} alt="Avatar utilisateur" className="user-avatar-image" />
+            ) : (
+              user?.name?.[0] || 'A'
+            )}
           </div>
           {sidebarOpen && (
             <>

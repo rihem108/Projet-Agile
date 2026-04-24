@@ -316,12 +316,6 @@
   background: linear-gradient(135deg, #3B82F6, #8B5CF6, #EC4899);
   border-radius: 50%;
   padding: 3px;
-  animation: rotate 3s linear infinite;
-}
-
-@keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 .avatar-inner {
@@ -337,7 +331,18 @@
   color: var(--primary-blue);
 }
 
-.avatar-badge {
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar-upload-input {
+  display: none;
+}
+
+.avatar-upload-badge {
   position: absolute;
   bottom: 5px;
   right: 5px;
@@ -350,6 +355,28 @@
   justify-content: center;
   color: white;
   border: 3px solid var(--card-bg);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.avatar-upload-badge:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 18px rgba(239, 68, 68, 0.25);
+}
+
+.avatar-remove-button {
+  margin-bottom: 20px;
+  border: none;
+  background: transparent;
+  color: var(--danger, #EF4444);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.avatar-remove-button:hover {
+  text-decoration: underline;
 }
 
 .profile-modern-grid {

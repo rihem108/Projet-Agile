@@ -2,6 +2,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
+import { api } from '../api';
 import { 
   LogIn, 
   Mail, 
@@ -50,6 +51,48 @@ const Login = () => {
 
     await login(email, password, selectedRole);
     setLoading(false);
+  };
+
+  const handleForgotPassword = async () => {
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
+      toast.error('Entrez votre email puis réessayez.');
+      return;
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(normalizedEmail)) {
+      toast.error('Veuillez saisir une adresse email valide.');
+      return;
+    }
+
+    try {
+      await api.postPublic('/auth/forgot-password', { email: normalizedEmail });
+      toast.success('Code de vérification envoyé par email.');
+
+      const code = window.prompt('Entrez le code reçu par email :');
+      if (!code) {
+        toast.error('Réinitialisation annulée.');
+        return;
+      }
+
+      const newPassword = window.prompt('Entrez votre nouveau mot de passe (min 6 caractères) :');
+      if (!newPassword) {
+        toast.error('Réinitialisation annulée.');
+        return;
+      }
+
+      await api.postPublic('/auth/reset-password', {
+        email: normalizedEmail,
+        code: code.trim(),
+        newPassword: newPassword.trim()
+      });
+
+      setPassword('');
+      toast.success('Mot de passe réinitialisé. Vous pouvez vous connecter.');
+    } catch (err) {
+      toast.error(err.message || 'Impossible de réinitialiser le mot de passe');
+    }
   };
 
   const roles = [
@@ -262,7 +305,9 @@ const Login = () => {
                   <input type="checkbox" />
                   <span>Se souvenir de moi</span>
                 </label>
-                <a href="#" className="forgot-link-glass">Mot de passe oublié ?</a>
+                <button type="button" className="forgot-link-glass" onClick={handleForgotPassword}>
+                  Mot de passe oublié ?
+                </button>
               </div>
 
               <button 
@@ -294,44 +339,6 @@ const Login = () => {
                   <ArrowRight size={18} className="btn-arrow" />
                 </button>
               </Link>
-              <div className="demo-divider">
-                <span>Comptes de démonstration</span>
-              </div>
-              <div className="demo-buttons">
-                <button 
-                  className="demo-btn demo-admin"
-                  onClick={() => {
-                    setEmail('admin@exam.com');
-                    setPassword('123456');
-                    setSelectedRole('Admin');
-                  }}
-                >
-                  <Shield size={14} />
-                  Admin
-                </button>
-                <button 
-                  className="demo-btn demo-teacher"
-                  onClick={() => {
-                    setEmail('alice@exam.com');
-                    setPassword('123456');
-                    setSelectedRole('Teacher');
-                  }}
-                >
-                  <Users size={14} />
-                  Teacher
-                </button>
-                <button 
-                  className="demo-btn demo-student"
-                  onClick={() => {
-                    setEmail('bob@exam.com');
-                    setPassword('123456');
-                    setSelectedRole('Student');
-                  }}
-                >
-                  <GraduationCap size={14} />
-                  Student
-                </button>
-              </div>
             </div>
           </div>
         </div>
