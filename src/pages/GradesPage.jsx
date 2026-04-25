@@ -1,5 +1,5 @@
 import React, { useContext, useMemo, useState } from 'react';
-import { CheckCircle, ShieldAlert, Save, Trash2 } from 'lucide-react';
+import { CheckCircle, ShieldAlert, Save, Trash2, BookOpen, Clock, Award, ClipboardList } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import { api } from '../api';
 import toast from 'react-hot-toast';
@@ -56,7 +56,7 @@ const GradesPage = () => {
 
     try {
       setSaving(true);
-      const saved = await api.post('/grades', {
+      await api.post('/grades', {
         examId: formData.examId,
         studentId: formData.studentId,
         grade: Number(formData.grade),
@@ -88,34 +88,85 @@ const GradesPage = () => {
     }
   };
 
-  const displayGrades = user?.role === 'Student' 
+  const displayGrades = user?.role === 'Student'
     ? grades.filter(g => g.studentId === user.id && g.validated)
     : grades;
 
   const pendingGrades = isStaff
-    ? displayGrades.filter(g => !g.validated).length 
+    ? displayGrades.filter(g => !g.validated).length
     : 0;
 
+  const totalGrades = displayGrades.length;
+  const validatedGrades = displayGrades.filter(g => g.validated).length;
+  const averageGrade = totalGrades > 0
+    ? (displayGrades.reduce((acc, g) => acc + g.grade, 0) / totalGrades).toFixed(2)
+    : '0.00';
+
   return (
-    <div>
+    <div className="grades-page">
       <div className="page-header">
-        <h1 className="page-title">Gestion des Notes</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ width: '52px', height: '52px', background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(139, 92, 246, 0.06))', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8B5CF6', flexShrink: 0 }}>
+            <ClipboardList size={26} />
+          </div>
+          <h1 className="page-title">Gestion des Notes</h1>
+        </div>
         {pendingGrades > 0 && (
-          <span className="badge badge-warning flex items-center gap-2" style={{ padding: '0.5rem 1rem' }}>
+          <span className="badge badge-warning flex items-center gap-2">
             <ShieldAlert size={16} /> {pendingGrades} note(s) en attente
           </span>
         )}
       </div>
 
+      {/* Stats Grid */}
+      <div className="grades-stats-grid">
+        <div className="grades-stat-card">
+          <div className="grades-stat-icon blue">
+            <BookOpen size={22} />
+          </div>
+          <div className="grades-stat-info">
+            <span className="grades-stat-value">{totalGrades}</span>
+            <span className="grades-stat-label">Total Notes</span>
+          </div>
+        </div>
+        <div className="grades-stat-card">
+          <div className="grades-stat-icon amber">
+            <Clock size={22} />
+          </div>
+          <div className="grades-stat-info">
+            <span className="grades-stat-value">{pendingGrades}</span>
+            <span className="grades-stat-label">En Attente</span>
+          </div>
+        </div>
+        <div className="grades-stat-card">
+          <div className="grades-stat-icon emerald">
+            <CheckCircle size={22} />
+          </div>
+          <div className="grades-stat-info">
+            <span className="grades-stat-value">{validatedGrades}</span>
+            <span className="grades-stat-label">Validées</span>
+          </div>
+        </div>
+        <div className="grades-stat-card">
+          <div className="grades-stat-icon violet">
+            <Award size={22} />
+          </div>
+          <div className="grades-stat-info">
+            <span className="grades-stat-value">{averageGrade}</span>
+            <span className="grades-stat-label">Moyenne</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Teacher Form */}
       {isTeacher && (
-        <div className="glass-card" style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ marginBottom: '1rem' }}>Ajouter une note par matière</h3>
+        <div className="grades-form-card">
+          <h3>Ajouter une note par matière</h3>
           <form onSubmit={handleCreateOrUpdate}>
-            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Examen / Matière</label>
+            <div className="grades-form-grid">
+              <div className="grades-form-group">
+                <label>Examen / Matière</label>
                 <select
-                  className="form-input"
                   value={formData.examId}
                   onChange={(e) => setFormData({ examId: e.target.value, studentId: '', grade: '' })}
                   required
@@ -127,10 +178,9 @@ const GradesPage = () => {
                 </select>
               </div>
 
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Étudiant</label>
+              <div className="grades-form-group">
+                <label>Étudiant</label>
                 <select
-                  className="form-input"
                   value={formData.studentId}
                   onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
                   required
@@ -143,97 +193,96 @@ const GradesPage = () => {
                 </select>
               </div>
 
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Note / 20</label>
+              <div className="grades-form-group">
+                <label>Note / 20</label>
                 <input
                   type="number"
                   min="0"
                   max="20"
                   step="0.25"
-                  className="form-input"
                   value={formData.grade}
                   onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
                   required
                 />
               </div>
 
-              <div className="form-group" style={{ marginBottom: 0, alignSelf: 'end' }}>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                  Toute note saisie par le surveillant passe en attente de validation.
-                </span>
+              <div className="grades-form-note">
+                Toute note saisie par le surveillant passe en attente de validation.
               </div>
             </div>
 
-            <div style={{ marginTop: '1rem' }}>
-              <button className="btn btn-primary" type="submit" disabled={saving}>
-                <Save size={16} /> Enregistrer la note
-              </button>
-            </div>
+            <button className="grades-submit-btn" type="submit" disabled={saving}>
+              <Save size={16} /> Enregistrer la note
+            </button>
           </form>
         </div>
       )}
 
-      <div className="glass-card table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Étudiant</th>
-              <th>Matière</th>
-              <th>Note globale</th>
-              <th>Statut de Validation</th>
-              {isStaff && <th>Action</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {displayGrades.map(grade => (
-              <tr key={grade.id}>
-                <td style={{ fontWeight: 500 }}>{getStudentName(grade.studentId)}</td>
-                <td>{getExamSubject(grade.examId)}</td>
-                <td style={{ fontWeight: 600, color: grade.grade >= 10 ? 'var(--success)' : 'var(--danger)' }}>
-                  {grade.grade} / 20
-                </td>
-                <td>
-                  {grade.validated ? (
-                    <span className="badge badge-success flex items-center gap-2" style={{ width: 'fit-content' }}>
-                      <CheckCircle size={12} /> Validée
-                    </span>
-                  ) : (
-                    <span className="badge badge-warning flex items-center gap-2" style={{ width: 'fit-content' }}>
-                      En Attente
-                    </span>
-                  )}
-                </td>
-                {isStaff && (
+      {/* Grades Table */}
+      <div className="grades-table-card">
+        <div className="grades-table-header">
+          <h3>Liste des Notes</h3>
+          <span className="grades-table-count">{totalGrades} entrée(s)</span>
+        </div>
+        <div className="grades-table-container">
+          <table className="grades-table">
+            <thead>
+              <tr>
+                <th>Étudiant</th>
+                <th>Matière</th>
+                <th>Note</th>
+                <th>Statut</th>
+                {isStaff && <th>Action</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {displayGrades.map(grade => (
+                <tr key={grade.id}>
+                  <td className="student-cell">{getStudentName(grade.studentId)}</td>
+                  <td className="subject-cell">{getExamSubject(grade.examId)}</td>
+                  <td className={`grade-cell ${grade.grade >= 10 ? 'grade-pass' : 'grade-fail'}`}>
+                    {grade.grade} / 20
+                  </td>
                   <td>
-                    {!grade.validated ? (
-                      <div className="flex gap-2">
-                        <button className="btn btn-primary" style={{ padding: '0.4rem 0.8rem' }} onClick={() => handleValidate(grade.id)}>
-                          Valider Officiellement
-                        </button>
-                        <button
-                          className="btn btn-ghost"
-                          style={{ padding: '0.4rem 0.8rem', color: 'var(--danger)' }}
-                          onClick={() => handleDeleteGrade(grade.id)}
-                        >
-                          <Trash2 size={16} /> Supprimer
-                        </button>
-                      </div>
+                    {grade.validated ? (
+                      <span className="grades-badge success">
+                        <CheckCircle size={12} /> Validée
+                      </span>
                     ) : (
-                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Validée</span>
+                      <span className="grades-badge warning">
+                        En Attente
+                      </span>
                     )}
                   </td>
-                )}
-              </tr>
-            ))}
-            {displayGrades.length === 0 && (
-              <tr>
-                <td colSpan={isStaff ? '5' : '4'} style={{ textAlign: 'center', padding: '2rem' }}>
-                  {user?.role === 'Student' ? 'Aucune note validée pour le moment.' : 'Aucune note enregistrée.'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                  {isStaff && (
+                    <td>
+                      {!grade.validated ? (
+                        <div className="grades-actions">
+                          <button className="grades-btn validate" onClick={() => handleValidate(grade.id)}>
+                            Valider
+                          </button>
+                          <button className="grades-btn delete" onClick={() => handleDeleteGrade(grade.id)}>
+                            <Trash2 size={14} /> Supprimer
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="grades-text-muted">Validée</span>
+                      )}
+                    </td>
+                  )}
+                </tr>
+              ))}
+              {displayGrades.length === 0 && (
+                <tr>
+                  <td colSpan={isStaff ? 5 : 4} className="grades-empty">
+                    <h4>Aucune note</h4>
+                    <p>{user?.role === 'Student' ? 'Aucune note validée pour le moment.' : 'Aucune note enregistrée.'}</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

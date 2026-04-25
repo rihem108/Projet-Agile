@@ -172,6 +172,16 @@ const PrivateRoute = ({ children }) => {
 const MainLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
   
+  // Persist dark mode across reloads
+  React.useEffect(() => {
+    const darkMode = localStorage.getItem('darkMode') === 'true';
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+  }, []);
+  
   return (
     <div className="app-container">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />

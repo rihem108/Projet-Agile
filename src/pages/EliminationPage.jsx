@@ -1,5 +1,5 @@
 // src/pages/EliminationPage.jsx
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useMemo } from 'react';
 import { 
   AlertTriangle, 
   Plus, 
@@ -24,7 +24,7 @@ import toast from 'react-hot-toast';
 import './EliminationPage.css';
 
 const EliminationPage = () => {
-  const { user, users, exams, grades } = useContext(AppContext);
+  const { user, users, exams, grades, assignments } = useContext(AppContext);
   const { 
     eliminations, 
     addElimination, 
@@ -65,6 +65,33 @@ const EliminationPage = () => {
     if (filterStatus === 'all') return true;
     return elim.status === filterStatus;
   });
+
+  // Teacher can only see eliminations for students in their assigned class(es)
+  const teacherClassNames = useMemo(() => {
+    if (!isTeacher || !assignments || !exams) return new Set();
+    const assignedExamIds = assignments
+      .filter(a => a.supervisorId === user?.id)
+      .map(a => a.examId);
+    const classNames = exams
+      .filter(e => assignedExamIds.includes(e.id))
+      .map(e => e.className);
+    return new Set(classNames);
+  }, [assignments, exams, isTeacher, user]);
+
+  const visibleEliminations = useMemo(() => {
+    if (isAdmin) return filteredEliminations;
+    if (isTeacher) {
+      return filteredEliminations.filter(elim => {
+        const student = users.find(u => u.id === elim.studentId);
+        return student && teacherClassNames.has(student.className);
+      });
+    }
+    return filteredEliminations;
+  }, [filteredEliminations, isAdmin, isTeacher, teacherClassNames, users]);
+
+  // Stats computed from visible eliminations
+  const visibleDisqualified = visibleEliminations.filter(e => e.status === 'disqualified');
+  const visibleAtRisk = visibleEliminations.filter(e => e.status === 'at_risk');
 
   const getStatusIcon = (status) => {
     if (status === 'disqualified') {
@@ -270,7 +297,7 @@ const EliminationPage = () => {
             <p>Gérez les éliminations selon les notes (🔴 0-33.33% | 🟡 33.34-66.66%)</p>
           </div>
         </div>
-        {(isAdmin || isTeacher) && (
+        {isAdmin && (
           <button className="elim-add-btn" onClick={handleAdd}>
             <Plus size={18} />
             Nouvelle élimination
@@ -285,7 +312,7 @@ const EliminationPage = () => {
             <AlertTriangle size={20} />
           </div>
           <div className="elim-stat-info">
-            <span className="elim-stat-value">{allEliminations.length}</span>
+            <span className="elim-stat-value">{visibleEliminations.length}</span>
             <span className="elim-stat-label">Total</span>
           </div>
         </div>
@@ -294,7 +321,7 @@ const EliminationPage = () => {
             <XCircle size={20} />
           </div>
           <div className="elim-stat-info">
-            <span className="elim-stat-value">{disqualified.length}</span>
+            <span className="elim-stat-value">{visibleDisqualified.length}</span>
             <span className="elim-stat-label">Éliminés 🔴</span>
           </div>
         </div>
@@ -303,7 +330,7 @@ const EliminationPage = () => {
             <AlertCircle size={20} />
           </div>
           <div className="elim-stat-info">
-            <span className="elim-stat-value">{atRisk.length}</span>
+            <span className="elim-stat-value">{visibleAtRisk.length}</span>
             <span className="elim-stat-label">À risque 🟡</span>
           </div>
         </div>
@@ -325,7 +352,7 @@ const EliminationPage = () => {
       <div className="elim-table-wrapper">
         <div className="elim-table-header">
           <h3>Liste des éliminations</h3>
-          <span className="elim-count">{filteredEliminations.length} élimination(s)</span>
+          <span className="elim-count">{visibleEliminations.length} élimination(s)</span>
         </div>
         <div className="elim-table-container">
           <table className="elim-table">
@@ -338,11 +365,11 @@ const EliminationPage = () => {
                 <th>Motif</th>
                 <th>Date</th>
                 <th>Publié par</th>
-                {(isAdmin || isTeacher) && <th>Actions</th>}
+                {isAdmin && <th>Actions</th>}
               </tr>
             </thead>
             <tbody>
-              {filteredEliminations.map((elim) => (
+              {visibleEliminations.map((elim) => (
                 <tr key={elim.id} className={`elim-row ${elim.status}`}>
                   <td className="exam-name">{elim.examName}</td>
                   <td>{elim.studentName}</td>
@@ -360,7 +387,7 @@ const EliminationPage = () => {
                   <td className="reason-cell">{elim.reason}</td>
                   <td>{elim.date}</td>
                   <td>{elim.publishedBy}</td>
-                  {(isAdmin || isTeacher) && (
+                  {isAdmin && (
                     <td className="actions-cell">
                       <div className="elim-actions">
                         <button className="elim-action-btn edit" onClick={() => handleEdit(elim)}>

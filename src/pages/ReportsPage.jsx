@@ -126,7 +126,6 @@ const ReportsPage = () => {
                 <th>Horaire</th>
                 <th>Durée</th>
                 <th>Salle</th>
-                <th>Surveillant</th>
                 <th>Étudiants</th>
                 <th>Statut</th>
               </tr>
@@ -149,7 +148,6 @@ const ReportsPage = () => {
                       <span className="room-badge">{exam.room}</span>
                     )}
                   </td>
-                  <td>{exam.supervisor}</td>
                   <td className="students-cell">{exam.students}</td>
                   <td>
                     <span className={`status-indicator status-${exam.status}`}>

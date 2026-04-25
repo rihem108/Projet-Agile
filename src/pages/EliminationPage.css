@@ -5,12 +5,12 @@
   animation: fadeInUp 0.4s ease-out;
 }
 
-/* Hero Section */
+/* Hero Section - No highlight */
 .elim-hero {
-  background: linear-gradient(135deg, #EF4444, #DC2626);
-  border-radius: 20px;
-  padding: 24px 28px;
-  margin-bottom: 28px;
+  background: transparent;
+  border-radius: 0;
+  padding: 0 0 20px 0;
+  margin-bottom: 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -27,29 +27,29 @@
 .elim-hero-icon {
   width: 52px;
   height: 52px;
-  background: rgba(255,255,255,0.15);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(239, 68, 68, 0.06));
   border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: #EF4444;
 }
 
 .elim-hero-content h1 {
   font-size: 26px;
   font-weight: 700;
-  color: white;
+  color: var(--dark);
   margin: 0 0 4px 0;
 }
 
 .elim-hero-content p {
-  color: rgba(255,255,255,0.85);
+  color: var(--gray);
   font-size: 14px;
   margin: 0;
 }
 
 .elim-add-btn {
-  background: rgba(255,255,255,0.15);
+  background: linear-gradient(135deg, #EF4444, #DC2626);
   border: none;
   padding: 10px 22px;
   border-radius: 12px;
@@ -64,8 +64,8 @@
 }
 
 .elim-add-btn:hover {
-  background: rgba(255,255,255,0.25);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
 }
 
 /* Stats Cards */

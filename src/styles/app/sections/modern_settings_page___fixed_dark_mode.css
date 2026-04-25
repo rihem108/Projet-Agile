@@ -15,93 +15,62 @@
   }
 }
 
-/* Hero Section */
+/* Hero Section - No highlight */
 .settings-hero {
-  background: linear-gradient(135deg, var(--primary-blue), #8B5CF6, #EC4899);
-  border-radius: 28px;
-  padding: 24px 32px;
-  margin-bottom: 32px;
+  background: transparent;
+  border-radius: 0;
+  padding: 0 0 20px 0;
+  margin-bottom: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 20px;
   position: relative;
-  overflow: hidden;
-  box-shadow: 0 20px 35px -10px rgba(59, 130, 246, 0.3);
-}
-
-.settings-hero::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -20%;
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(255,255,255,0.1), transparent);
-  border-radius: 50%;
-  animation: float 8s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-20px, -20px); }
+  overflow: visible;
 }
 
 .settings-hero-content {
   display: flex;
   align-items: center;
   gap: 16px;
-  position: relative;
-  z-index: 1;
 }
 
 .hero-icon {
-  width: 56px;
-  height: 56px;
-  background: rgba(255,255,255,0.2);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.06));
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  color: #3B82F6;
 }
 
 .settings-hero-content h1 {
   font-size: 28px;
   font-weight: 700;
-  color: white;
+  color: var(--dark);
   margin: 0 0 4px 0;
 }
 
 .settings-hero-content p {
-  color: rgba(255,255,255,0.8);
+  color: var(--gray);
   margin: 0;
 }
 
 .hero-badge {
-  background: rgba(255,255,255,0.2);
-  backdrop-filter: blur(10px);
+  background: rgba(59, 130, 246, 0.1);
   padding: 8px 20px;
   border-radius: 40px;
   display: flex;
   align-items: center;
   gap: 8px;
-  color: white;
+  color: #3B82F6;
   font-size: 14px;
   font-weight: 500;
-  position: relative;
-  z-index: 1;
 }
 
-/* Modern Container */
 .settings-modern-container {
   display: flex;
   gap: 28px;

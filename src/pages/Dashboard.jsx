@@ -1,7 +1,7 @@
 // src/pages/Dashboard.jsx
 import React, { useContext } from 'react';
 import { AppContext } from '../context/AppContext';
-import { Users, BookOpen, MapPin, CheckCircle, TrendingUp, Calendar, Clock, Award } from 'lucide-react';
+import { Users, BookOpen, MapPin, CheckCircle, TrendingUp, Calendar, Clock, Award, LayoutDashboard } from 'lucide-react';
 
 const Dashboard = () => {
   const { user, users, exams, rooms, grades } = useContext(AppContext);
@@ -57,8 +57,15 @@ const Dashboard = () => {
     <div>
       {/* Page Header - Reduced spacing */}
       <div className="dashboard-header">
-        <h1>Tableau de Bord</h1>
-        <p>Bienvenue {user?.name || 'Admin'} ! Voici un aperçu de votre espace</p>
+        <div className="dashboard-header-content" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ width: '52px', height: '52px', background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.06))', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3B82F6', flexShrink: 0 }}>
+            <LayoutDashboard size={26} />
+          </div>
+          <div>
+            <h1>Tableau de Bord</h1>
+            <p>Bienvenue {user?.name || 'Admin'} ! Voici un aperçu de votre espace</p>
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}
