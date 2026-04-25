@@ -55,20 +55,24 @@ const RoomsPage = () => {
     { id: 'coffee', label: 'Cafétéria', icon: Coffee },
   ];
 
-  // Mock rooms if empty
-  const [localRooms, setLocalRooms] = useState([
-    { id: 1, name: 'Amphithéâtre A', building: 'Bâtiment A', floor: 'RDC', capacity: 150, type: 'amphitheater', status: 'available', equipment: ['projector', 'wifi', 'ac'], description: 'Grand amphithéâtre équipé pour les conférences', currentExam: null, nextExam: 'Mathématiques - 15/05/2026' },
-    { id: 2, name: 'Laboratoire B', building: 'Bâtiment B', floor: '1er étage', capacity: 30, type: 'lab', status: 'available', equipment: ['wifi', 'ac'], description: 'Laboratoire informatique', currentExam: null, nextExam: 'Physique - 16/05/2026' },
-    { id: 3, name: 'Salle A101', building: 'Bâtiment A', floor: '1er étage', capacity: 40, type: 'standard', status: 'occupied', equipment: ['projector', 'wifi'], description: 'Salle de cours standard', currentExam: 'Informatique - 10:00', nextExam: 'Informatique - 18/05/2026' },
-    { id: 4, name: 'Salle B202', building: 'Bâtiment B', floor: '2ème étage', capacity: 35, type: 'standard', status: 'available', equipment: ['projector', 'wifi', 'ac'], description: 'Salle lumineuse avec vue', currentExam: null, nextExam: 'Anglais - 20/05/2026' },
-    { id: 5, name: 'Salle C303', building: 'Bâtiment C', floor: '3ème étage', capacity: 25, type: 'small', status: 'maintenance', equipment: ['wifi'], description: 'Salle en maintenance', currentExam: null, nextExam: null },
-  ]);
+  const [localRooms, setLocalRooms] = useState([]);
+  const roomsStorageKey = 'rooms:persisted';
 
   useEffect(() => {
-    if (rooms && rooms.length > 0) {
+    // Clear stale localStorage data to ensure fresh backend data
+    localStorage.removeItem(roomsStorageKey);
+    
+    // Always use fresh backend data
+    if (Array.isArray(rooms)) {
       setLocalRooms(rooms);
     }
-  }, [rooms]);
+  }, [rooms, roomsStorageKey]);
+
+  useEffect(() => {
+    if (localRooms.length > 0) {
+      localStorage.setItem(roomsStorageKey, JSON.stringify(localRooms));
+    }
+  }, [localRooms, roomsStorageKey]);
 
   // Get unique buildings for filter
   const buildings = ['all', ...new Set(localRooms.map(r => r.building))];
@@ -123,10 +127,13 @@ const RoomsPage = () => {
     setShowModal(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette salle ?')) {
-      setLocalRooms(localRooms.filter(r => r.id !== id));
-      toast.success('Salle supprimée avec succès');
+      const deleted = await deleteRoom(id);
+      setLocalRooms(prev => prev.filter(r => r.id !== id));
+      if (!deleted) {
+        toast('Suppression locale uniquement (serveur indisponible).', { icon: '⚠️' });
+      }
     }
   };
 
@@ -144,29 +151,50 @@ const RoomsPage = () => {
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.name || !formData.building || !formData.capacity) {
       toast.error('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
+    const roomPayload = {
+      name: formData.name,
+      building: formData.building,
+      floor: formData.floor,
+      capacity: parseInt(formData.capacity),
+      type: formData.type,
+      status: formData.status,
+      equipment: formData.equipment,
+      description: formData.description,
+      currentExam: null,
+      nextExam: null
+    };
+
     if (editingRoom) {
-      setLocalRooms(localRooms.map(r => 
-        r.id === editingRoom.id 
-          ? { ...r, ...formData, capacity: parseInt(formData.capacity) }
-          : r
-      ));
-      toast.success('Salle modifiée avec succès');
+      const updated = await updateRoom(editingRoom.id, roomPayload);
+      if (updated) {
+        setLocalRooms(prev => prev.map(r => (r.id === editingRoom.id ? updated : r)));
+      } else {
+        const localUpdated = {
+          ...editingRoom,
+          ...roomPayload,
+          id: editingRoom.id
+        };
+        setLocalRooms(prev => prev.map(r => (r.id === editingRoom.id ? localUpdated : r)));
+        toast('Modifié localement (serveur indisponible).', { icon: '⚠️' });
+      }
     } else {
-      const newRoom = {
-        id: Date.now(),
-        ...formData,
-        capacity: parseInt(formData.capacity),
-        currentExam: null,
-        nextExam: null
-      };
-      setLocalRooms([...localRooms, newRoom]);
-      toast.success('Salle ajoutée avec succès');
+      const created = await addRoom(roomPayload);
+      if (created) {
+        setLocalRooms(prev => [...prev, created]);
+      } else {
+        const localCreated = {
+          id: Date.now(),
+          ...roomPayload,
+        };
+        setLocalRooms(prev => [...prev, localCreated]);
+        toast('Ajouté localement (serveur indisponible).', { icon: '⚠️' });
+      }
     }
     setShowModal(false);
   };

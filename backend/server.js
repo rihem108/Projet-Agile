@@ -24,7 +24,7 @@ mongoose.connect(mongoURI)
 // ========== AUTH ========== //
 const authMiddleware = (req, res, next) => {
   // Ignorer pour login, register et seed
-  if (req.path === '/auth/login' || req.path === '/auth/register' || req.path === '/seed') return next();
+  if (req.path === '/auth/login' || req.path === '/auth/register' || req.path === '/seed' || req.path === '/api/seed') return next();
   
   const authHeader = req.header('Authorization');
   if (!authHeader) return res.status(401).json({ message: 'Accès refusé. Token manquant.' });

@@ -71,11 +71,25 @@ const AssignmentPage = () => {
     setShowModal(true);
   };
 
+  // Auto-populate date and time when exam is selected
+  const handleExamChange = (examId) => {
+    const selectedExam = exams?.find(e => e.id === parseInt(examId));
+    if (selectedExam) {
+      setFormData(prev => ({
+        ...prev,
+        date: prev.date || selectedExam.date || '',
+        time: prev.time || selectedExam.time || ''
+      }));
+    }
+  };
+
   const handleDelete = async (id) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette affectation ?')) {
       const success = await deleteAssignment(id);
       if (success) {
         toast.success('Affectation supprimée avec succès');
+      } else {
+        toast('Suppression locale uniquement (serveur indisponible).', { icon: '⚠️' });
       }
     }
   };
@@ -87,9 +101,9 @@ const AssignmentPage = () => {
     }
 
     const payload = {
-      examId: formData.examId,
-      roomId: formData.roomId,
-      supervisorId: formData.supervisorId,
+      examId: parseInt(formData.examId),
+      roomId: parseInt(formData.roomId),
+      supervisorId: parseInt(formData.supervisorId),
       date: formData.date,
       time: formData.time,
       status: 'scheduled'
@@ -100,12 +114,16 @@ const AssignmentPage = () => {
       if (updated) {
         toast.success('Affectation modifiée avec succès');
         setShowModal(false);
+      } else {
+        toast('Modification locale uniquement (serveur indisponible).', { icon: '⚠️' });
       }
     } else {
       const created = await addAssignment(payload);
       if (created) {
         toast.success('Affectation ajoutée avec succès');
         setShowModal(false);
+      } else {
+        toast('Ajout local uniquement (serveur indisponible).', { icon: '⚠️' });
       }
     }
   };
@@ -304,7 +322,10 @@ const AssignmentPage = () => {
                 <select 
                   className="assignment-form-select"
                   value={formData.examId}
-                  onChange={(e) => setFormData({...formData, examId: e.target.value})}
+                  onChange={(e) => {
+                    setFormData({...formData, examId: e.target.value});
+                    handleExamChange(e.target.value);
+                  }}
                 >
                   <option value="">Sélectionner un examen</option>
                   {exams?.map(exam => (
@@ -371,3 +392,4 @@ const AssignmentPage = () => {
 };
 
 export default AssignmentPage;
+
