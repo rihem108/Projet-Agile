@@ -101,3 +101,20 @@
   font-weight: 500;
 }
 
+/* Dark Mode */
+.dark-mode .dashboard-header h1 {
+  color: var(--text-white);
+}
+
+.dark-mode .dashboard-header p {
+  color: #94A3B8;
+}
+
+.dark-mode .stat-value {
+  color: var(--text-white);
+}
+
+.dark-mode .stat-label {
+  color: #94A3B8;
+}
+

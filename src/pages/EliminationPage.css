@@ -545,6 +545,10 @@
   color: var(--text-secondary);
 }
 
+.dark-mode .elim-hero-content h1 {
+  color: var(--text-white);
+}
+
 /* Animations */
 @keyframes fadeInUp {
   from {

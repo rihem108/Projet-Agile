@@ -434,6 +434,11 @@
   color: var(--text-secondary);
 }
 
+.dark-mode .org-header-left h1,
+.dark-mode .org-table-header h3 {
+  color: var(--text-white);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .org-header-section {

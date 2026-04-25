@@ -408,6 +408,11 @@
   background: rgba(59, 130, 246, 0.15);
 }
 
+.dark-mode .reports-header-left h1,
+.dark-mode .table-header h3 {
+  color: var(--text-white);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .reports-header-section {

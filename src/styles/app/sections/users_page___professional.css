@@ -17,71 +17,50 @@
 
 /* Hero Section */
 .users-hero {
-  background: linear-gradient(135deg, #3B82F6, #8B5CF6);
-  border-radius: 24px;
-  padding: 24px 32px;
-  margin-bottom: 28px;
+  background: transparent;
+  border-radius: 0;
+  padding: 0 0 20px 0;
+  margin-bottom: 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 20px;
   position: relative;
-  overflow: hidden;
-}
-
-.users-hero::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -10%;
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(255,255,255,0.1), transparent);
-  border-radius: 50%;
-  animation: float 6s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-20px, -20px); }
+  overflow: visible;
 }
 
 .users-hero-content {
   display: flex;
   align-items: center;
   gap: 16px;
-  position: relative;
-  z-index: 1;
 }
 
 .users-hero-icon {
-  width: 56px;
-  height: 56px;
-  background: rgba(255,255,255,0.2);
-  backdrop-filter: blur(10px);
-  border-radius: 18px;
+  width: 52px;
+  height: 52px;
+  background: transparent;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: #3B82F6;
 }
 
 .users-hero-content h1 {
   font-size: 28px;
   font-weight: 700;
-  color: white;
+  color: var(--dark);
   margin: 0 0 4px 0;
 }
 
 .users-hero-content p {
-  color: rgba(255,255,255,0.8);
+  color: var(--gray);
   margin: 0;
 }
 
 .users-add-btn {
-  background: rgba(255,255,255,0.2);
-  backdrop-filter: blur(10px);
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
   border: none;
   padding: 12px 24px;
   border-radius: 14px;
@@ -93,13 +72,11 @@
   gap: 8px;
   cursor: pointer;
   transition: all 0.3s;
-  position: relative;
-  z-index: 1;
 }
 
 .users-add-btn:hover {
-  background: rgba(255,255,255,0.3);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 /* Stats Cards */
@@ -739,6 +716,10 @@
 
 .dark-mode .users-empty-state p {
   color: var(--text-secondary);
+}
+
+.dark-mode .users-hero-content h1 {
+  color: var(--text-white);
 }
 
 /* Responsive */

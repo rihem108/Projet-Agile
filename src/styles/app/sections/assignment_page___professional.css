@@ -615,6 +615,11 @@
   border-color: #334155;
 }
 
+.dark-mode .assignment-header-left h1,
+.dark-mode .assignment-table-header h3 {
+  color: var(--text-white);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .assignment-header-section {

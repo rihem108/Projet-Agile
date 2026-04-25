@@ -872,6 +872,14 @@
   color: white;
 }
 
+.dark-mode .settings-hero-content h1 {
+  color: var(--text-white);
+}
+
+.dark-mode .settings-hero-content p {
+  color: #94A3B8;
+}
+
 /* Responsive */
 @media (max-width: 968px) {
   .settings-modern-container {
