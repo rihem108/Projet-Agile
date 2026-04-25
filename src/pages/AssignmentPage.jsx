@@ -20,7 +20,7 @@ import { AppContext } from '../context/AppContext';
 import toast from 'react-hot-toast';
 
 const AssignmentPage = () => {
-  const { exams, rooms, users, assignments, setAssignments } = useContext(AppContext);
+  const { exams, rooms, users, assignments, setAssignments, addAssignment, updateAssignment, deleteAssignment } = useContext(AppContext);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showModal, setShowModal] = useState(false);
@@ -35,27 +35,14 @@ const AssignmentPage = () => {
 
   // Get teachers
   const teachers = users?.filter(u => u.role === 'Teacher') || [];
-  
-  // Mock assignments data if empty
-  const [localAssignments, setLocalAssignments] = useState([
-    { id: 1, examId: 1, roomId: 1, supervisorId: 2, status: 'scheduled', date: '2026-05-15', time: '09:00' },
-    { id: 2, examId: 2, roomId: 2, supervisorId: 3, status: 'scheduled', date: '2026-05-16', time: '14:00' },
-    { id: 3, examId: 3, roomId: 1, supervisorId: 2, status: 'scheduled', date: '2026-05-18', time: '10:00' },
-  ]);
 
-  useEffect(() => {
-    if (assignments && assignments.length > 0) {
-      setLocalAssignments(assignments);
-    }
-  }, [assignments]);
+  const getExamSubject = (id) => exams?.find(e => String(e.id) === String(id))?.subject || 'Inconnu';
+  const getExamDuration = (id) => exams?.find(e => String(e.id) === String(id))?.duration || '2h';
+  const getRoomName = (id) => rooms?.find(r => String(r.id) === String(id))?.name || 'Non assignée';
+  const getRoomCapacity = (id) => rooms?.find(r => String(r.id) === String(id))?.capacity || '-';
+  const getSupervisorName = (id) => users?.find(u => String(u.id) === String(id))?.name || 'Non assigné';
 
-  const getExamSubject = (id) => exams?.find(e => e.id === id)?.subject || 'Inconnu';
-  const getExamDuration = (id) => exams?.find(e => e.id === id)?.duration || '2h';
-  const getRoomName = (id) => rooms?.find(r => r.id === id)?.name || 'Non assignée';
-  const getRoomCapacity = (id) => rooms?.find(r => r.id === id)?.capacity || '-';
-  const getSupervisorName = (id) => users?.find(u => u.id === id)?.name || 'Non assigné';
-
-  const filteredAssignments = localAssignments.filter(assignment => {
+  const filteredAssignments = assignments.filter(assignment => {
     const examName = getExamSubject(assignment.examId).toLowerCase();
     const supervisor = getSupervisorName(assignment.supervisorId).toLowerCase();
     const room = getRoomName(assignment.roomId).toLowerCase();
@@ -75,45 +62,52 @@ const AssignmentPage = () => {
   const handleEdit = (assignment) => {
     setEditingAssignment(assignment);
     setFormData({
-      examId: assignment.examId,
-      roomId: assignment.roomId,
-      supervisorId: assignment.supervisorId,
+      examId: String(assignment.examId || ''),
+      roomId: String(assignment.roomId || ''),
+      supervisorId: String(assignment.supervisorId || ''),
       date: assignment.date || '',
       time: assignment.time || ''
     });
     setShowModal(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette affectation ?')) {
-      setLocalAssignments(localAssignments.filter(a => a.id !== id));
-      toast.success('Affectation supprimée avec succès');
+      const success = await deleteAssignment(id);
+      if (success) {
+        toast.success('Affectation supprimée avec succès');
+      }
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.examId || !formData.roomId || !formData.supervisorId) {
-      toast.error('Veuillez remplir tous les champs');
+      toast.error('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
+    const payload = {
+      examId: formData.examId,
+      roomId: formData.roomId,
+      supervisorId: formData.supervisorId,
+      date: formData.date,
+      time: formData.time,
+      status: 'scheduled'
+    };
+
     if (editingAssignment) {
-      setLocalAssignments(localAssignments.map(a => 
-        a.id === editingAssignment.id 
-          ? { ...a, ...formData, status: 'scheduled' }
-          : a
-      ));
-      toast.success('Affectation modifiée avec succès');
+      const updated = await updateAssignment(editingAssignment.id, payload);
+      if (updated) {
+        toast.success('Affectation modifiée avec succès');
+        setShowModal(false);
+      }
     } else {
-      const newAssignment = {
-        id: Date.now(),
-        ...formData,
-        status: 'scheduled'
-      };
-      setLocalAssignments([...localAssignments, newAssignment]);
-      toast.success('Affectation ajoutée avec succès');
+      const created = await addAssignment(payload);
+      if (created) {
+        toast.success('Affectation ajoutée avec succès');
+        setShowModal(false);
+      }
     }
-    setShowModal(false);
   };
 
   const handleExport = () => {
@@ -121,10 +115,10 @@ const AssignmentPage = () => {
   };
 
   // Stats
-  const totalAssignments = localAssignments.length;
-  const scheduledCount = localAssignments.filter(a => a.status === 'scheduled').length;
-  const completedCount = localAssignments.filter(a => a.status === 'completed').length;
-  const uniqueRooms = [...new Set(localAssignments.map(a => a.roomId))].length;
+  const totalAssignments = assignments.length;
+  const scheduledCount = assignments.filter(a => a.status === 'scheduled').length;
+  const completedCount = assignments.filter(a => a.status === 'completed').length;
+  const uniqueRooms = [...new Set(assignments.map(a => a.roomId))].length;
 
   return (
     <div className="assignment-container">
@@ -310,7 +304,7 @@ const AssignmentPage = () => {
                 <select 
                   className="assignment-form-select"
                   value={formData.examId}
-                  onChange={(e) => setFormData({...formData, examId: parseInt(e.target.value)})}
+                  onChange={(e) => setFormData({...formData, examId: e.target.value})}
                 >
                   <option value="">Sélectionner un examen</option>
                   {exams?.map(exam => (
@@ -323,7 +317,7 @@ const AssignmentPage = () => {
                 <select 
                   className="assignment-form-select"
                   value={formData.roomId}
-                  onChange={(e) => setFormData({...formData, roomId: parseInt(e.target.value)})}
+                  onChange={(e) => setFormData({...formData, roomId: e.target.value})}
                 >
                   <option value="">Sélectionner une salle</option>
                   {rooms?.map(room => (
@@ -336,7 +330,7 @@ const AssignmentPage = () => {
                 <select 
                   className="assignment-form-select"
                   value={formData.supervisorId}
-                  onChange={(e) => setFormData({...formData, supervisorId: parseInt(e.target.value)})}
+                  onChange={(e) => setFormData({...formData, supervisorId: e.target.value})}
                 >
                   <option value="">Sélectionner un surveillant</option>
                   {teachers.map(teacher => (
