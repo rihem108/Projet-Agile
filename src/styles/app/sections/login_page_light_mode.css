@@ -711,3 +711,469 @@
   filter: brightness(1.1);
 }
 
+/* ==================== FORGOT PASSWORD MODAL ==================== */
+
+/* Modal Overlay */
+.forgot-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Modal Container */
+.forgot-modal {
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 28px;
+  width: 100%;
+  max-width: 440px;
+  padding: 40px 36px;
+  position: relative;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Close Button */
+.forgot-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94A3B8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.forgot-modal-close:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #EF4444;
+  transform: rotate(90deg);
+}
+
+/* Modal Header */
+.forgot-modal-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.forgot-modal-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  color: #60A5FA;
+  animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.3); }
+  50% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
+}
+
+.forgot-modal-header h3 {
+  font-size: 22px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.forgot-modal-header p {
+  font-size: 13px;
+  color: #94A3B8;
+  line-height: 1.5;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+/* Step Indicator */
+.forgot-modal-step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 28px;
+  padding: 0 20px;
+}
+
+.forgot-step-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.forgot-step-dot.pending {
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  color: #64748B;
+}
+
+.forgot-step-dot.active {
+  background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+  border: 2px solid transparent;
+  color: white;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+  transform: scale(1.1);
+}
+
+.forgot-step-dot.completed {
+  background: linear-gradient(135deg, #10B981, #059669);
+  border: 2px solid transparent;
+  color: white;
+}
+
+.forgot-step-line {
+  flex: 1;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 0 8px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 1px;
+}
+
+.forgot-step-line.completed {
+  background: linear-gradient(90deg, #10B981, #059669);
+}
+
+.forgot-step-line.completed::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: lineShine 1.5s ease-in-out infinite;
+}
+
+@keyframes lineShine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Error Message */
+.forgot-modal-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 14px;
+  color: #FCA5A5;
+  font-size: 13px;
+  animation: errorShake 0.4s ease;
+}
+
+.forgot-modal-error svg {
+  flex-shrink: 0;
+  color: #EF4444;
+}
+
+@keyframes errorShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+/* Info Message */
+.forgot-modal-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  border-radius: 14px;
+  color: #93C5FD;
+  font-size: 13px;
+}
+
+.forgot-modal-info svg {
+  flex-shrink: 0;
+  color: #3B82F6;
+}
+
+.forgot-modal-info strong {
+  color: #BFDBFE;
+  font-weight: 600;
+}
+
+/* Form */
+.forgot-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.forgot-modal-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.forgot-modal-input-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #CBD5E1;
+  padding-left: 4px;
+}
+
+.forgot-modal-input {
+  width: 100%;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  font-size: 14px;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.forgot-modal-input:focus {
+  outline: none;
+  border-color: #3B82F6;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.forgot-modal-input::placeholder {
+  color: #64748B;
+}
+
+/* Password Toggle in Modal */
+.forgot-password-toggle {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.forgot-password-toggle:hover {
+  color: #94A3B8;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Primary Button */
+.forgot-modal-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  margin-top: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.forgot-modal-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.forgot-modal-btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.forgot-modal-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.5);
+}
+
+.forgot-modal-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.forgot-modal-btn:disabled::before {
+  display: none;
+}
+
+/* Back Button */
+.forgot-modal-back-btn {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  color: #94A3B8;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.forgot-modal-back-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #CBD5E1;
+}
+
+/* Resend Link */
+.forgot-modal-resend {
+  text-align: center;
+  font-size: 12px;
+  color: #64748B;
+  margin-top: 4px;
+}
+
+.forgot-modal-resend button {
+  background: none;
+  border: none;
+  color: #3B82F6;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.forgot-modal-resend button:hover {
+  color: #60A5FA;
+  text-decoration: underline;
+}
+
+.forgot-modal-resend button:disabled {
+  color: #475569;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+/* Success State */
+.forgot-modal-success {
+  text-align: center;
+  padding: 16px 0;
+}
+
+.forgot-modal-success-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2));
+  border: 2px solid rgba(16, 185, 129, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  color: #34D399;
+  animation: successPop 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes successPop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.forgot-modal-success h4 {
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.forgot-modal-success p {
+  font-size: 13px;
+  color: #94A3B8;
+  line-height: 1.5;
+}
+
+/* Spin Animation for Loader */
+.spin-icon {
+  animation: spin 0.8s linear infinite;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .forgot-modal {
+    padding: 32px 24px;
+    border-radius: 24px;
+  }
+  
+  .forgot-modal-header h3 {
+    font-size: 20px;
+  }
+  
+  .forgot-modal-icon {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+

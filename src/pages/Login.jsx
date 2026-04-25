@@ -12,7 +12,6 @@ import {
   Shield, 
   GraduationCap, 
   Users, 
-  Sparkles,
   ArrowRight,
   Star,
   Award,
@@ -20,11 +19,18 @@ import {
   CheckCircle,
   MapPin,
   Phone,
-  Building2
+  Building2,
+  X,
+  ArrowLeft,
+  ShieldCheck,
+  AlertCircle,
+  Loader2,
+  CheckCircle2,
+  Send,
+  KeyRound
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-// Logo is in public folder - use direct path
 const logo = '/logo.png';
 
 const Login = () => {
@@ -34,6 +40,17 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState('Student');
+
+  // Forgot password modal state
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotStep, setForgotStep] = useState(1);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotCode, setForgotCode] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState('');
+  const [showForgotPasswordInput, setShowForgotPasswordInput] = useState(false);
 
   if (isAuthenticated && user) {
     return <Navigate to="/" />;
@@ -48,54 +65,94 @@ const Login = () => {
     }
 
     setLoading(true);
-
     await login(email, password, selectedRole);
     setLoading(false);
   };
 
-  const handleForgotPassword = async () => {
-    const normalizedEmail = email.trim();
+  const openForgotModal = () => {
+    setForgotEmail(email.trim());
+    setForgotStep(1);
+    setForgotCode('');
+    setForgotNewPassword('');
+    setForgotConfirmPassword('');
+    setForgotError('');
+    setShowForgotPasswordInput(false);
+    setShowForgotModal(true);
+  };
+
+  const closeForgotModal = () => {
+    setShowForgotModal(false);
+    setForgotError('');
+  };
+
+  const handleSendCode = async () => {
+    const normalizedEmail = forgotEmail.trim();
     if (!normalizedEmail) {
-      toast.error('Entrez votre email puis réessayez.');
+      setForgotError('Veuillez saisir votre adresse email.');
       return;
     }
 
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(normalizedEmail)) {
-      toast.error('Veuillez saisir une adresse email valide.');
+      setForgotError('Veuillez saisir une adresse email valide.');
       return;
     }
 
+    setForgotLoading(true);
+    setForgotError('');
+
     try {
-      const response = await api.postPublic('/auth/forgot-password', { email: normalizedEmail });
-
-      if (response?.code) {
-        window.alert(`Votre code de vérification est : ${response.code}\n(Ce code est valable 15 minutes)`);
-      }
-
-      const code = window.prompt('Entrez le code reçu :');
-      if (!code) {
-        toast.error('Réinitialisation annulée.');
-        return;
-      }
-
-      const newPassword = window.prompt('Entrez votre nouveau mot de passe (min 6 caractères) :');
-      if (!newPassword) {
-        toast.error('Réinitialisation annulée.');
-        return;
-      }
-
-      await api.postPublic('/auth/reset-password', {
-        email: normalizedEmail,
-        code: code.trim(),
-        newPassword: newPassword.trim()
-      });
-
-      setPassword('');
-      toast.success('Mot de passe réinitialisé. Vous pouvez vous connecter.');
+      await api.postPublic('/auth/forgot-password', { email: normalizedEmail });
+      setForgotStep(2);
+      toast.success('Code de vérification envoyé.');
     } catch (err) {
-      toast.error(err.message || 'Impossible de réinitialiser le mot de passe');
+      setForgotError(err.message || 'Impossible d\'envoyer le code.');
+    } finally {
+      setForgotLoading(false);
     }
+  };
+
+  const handleVerifyCode = () => {
+    if (!forgotCode.trim()) {
+      setForgotError('Veuillez entrer le code de vérification.');
+      return;
+    }
+    setForgotError('');
+    setForgotStep(3);
+  };
+
+  const handleResetPassword = async () => {
+    if (!forgotNewPassword || forgotNewPassword.length < 6) {
+      setForgotError('Le mot de passe doit contenir au moins 6 caractères.');
+      return;
+    }
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      setForgotError('Les mots de passe ne correspondent pas.');
+      return;
+    }
+
+    setForgotLoading(true);
+    setForgotError('');
+
+    try {
+      await api.postPublic('/auth/reset-password', {
+        email: forgotEmail.trim(),
+        code: forgotCode.trim(),
+        newPassword: forgotNewPassword.trim()
+      });
+      setForgotStep(4);
+      toast.success('Mot de passe réinitialisé avec succès.');
+    } catch (err) {
+      setForgotError(err.message || 'Impossible de réinitialiser le mot de passe.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const getStepDotClass = (stepNum) => {
+    if (forgotStep === stepNum) return 'active';
+    if (forgotStep > stepNum) return 'completed';
+    return 'pending';
   };
 
   const roles = [
@@ -104,16 +161,11 @@ const Login = () => {
     { id: 'Student', icon: GraduationCap, gradient: 'from-amber-500 to-yellow-500', color: '#F59E0B' },
   ];
 
-  // Create floating particles
   useEffect(() => {
     const createParticles = () => {
       const container = document.querySelector('.particles-container');
       if (!container) return;
-      
-      // Clear existing particles
       container.innerHTML = '';
-      
-      // Create new particles
       for (let i = 0; i < 60; i++) {
         const particle = document.createElement('div');
         particle.className = 'particle';
@@ -126,10 +178,7 @@ const Login = () => {
         container.appendChild(particle);
       }
     };
-    
     createParticles();
-    
-    // Recreate particles on window resize
     window.addEventListener('resize', createParticles);
     return () => window.removeEventListener('resize', createParticles);
   }, []);
@@ -308,7 +357,7 @@ const Login = () => {
                   <input type="checkbox" />
                   <span>Se souvenir de moi</span>
                 </label>
-                <button type="button" className="forgot-link-glass" onClick={handleForgotPassword}>
+                <button type="button" className="forgot-link-glass" onClick={openForgotModal}>
                   Mot de passe oublié ?
                 </button>
               </div>
@@ -346,8 +395,222 @@ const Login = () => {
           </div>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <div className="forgot-modal-overlay" onClick={(e) => e.target === e.currentTarget && closeForgotModal()}>
+          <div className="forgot-modal">
+            <button className="forgot-modal-close" onClick={closeForgotModal}>
+              <X size={18} />
+            </button>
+
+            {/* Step Header */}
+            <div className="forgot-modal-header">
+              <div className="forgot-modal-icon">
+                {forgotStep === 1 && <Mail size={28} />}
+                {forgotStep === 2 && <ShieldCheck size={28} />}
+                {forgotStep === 3 && <KeyRound size={28} />}
+                {forgotStep === 4 && <CheckCircle2 size={28} />}
+              </div>
+              <h3>
+                {forgotStep === 1 && "Mot de passe oublié"}
+                {forgotStep === 2 && "Vérification"}
+                {forgotStep === 3 && "Nouveau mot de passe"}
+                {forgotStep === 4 && "Succès !"}
+              </h3>
+              <p>
+                {forgotStep === 1 && "Entrez votre email pour recevoir un code de vérification."}
+                {forgotStep === 2 && "Saisissez le code à 6 chiffres envoyé par email."}
+                {forgotStep === 3 && "Créez un nouveau mot de passe sécurisé."}
+                {forgotStep === 4 && "Votre mot de passe a été réinitialisé avec succès."}
+              </p>
+            </div>
+
+            {/* Step Indicator */}
+            {forgotStep < 4 && (
+              <div className="forgot-modal-step">
+                <div className={`forgot-step-dot ${getStepDotClass(1)}`}>1</div>
+                <div className={`forgot-step-line ${forgotStep >= 2 ? 'completed' : ''}`}></div>
+                <div className={`forgot-step-dot ${getStepDotClass(2)}`}>2</div>
+                <div className={`forgot-step-line ${forgotStep >= 3 ? 'completed' : ''}`}></div>
+                <div className={`forgot-step-dot ${getStepDotClass(3)}`}>3</div>
+              </div>
+            )}
+
+            {/* Error Message */}
+            {forgotError && (
+              <div className="forgot-modal-error" style={{ marginBottom: '16px' }}>
+                <AlertCircle size={16} />
+                <span>{forgotError}</span>
+              </div>
+            )}
+
+            {/* Step 1: Email */}
+            {forgotStep === 1 && (
+              <div className="forgot-modal-form">
+                <div className="forgot-modal-input-group">
+                  <label>Adresse email</label>
+                  <input
+                    type="email"
+                    className="forgot-modal-input"
+                    placeholder="votre@email.com"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendCode()}
+                    autoFocus
+                  />
+                </div>
+                <button 
+                  className="forgot-modal-btn" 
+                  onClick={handleSendCode}
+                  disabled={forgotLoading}
+                >
+                  {forgotLoading ? (
+                    <>
+                      <Loader2 size={18} className="spin-icon" />
+                      <span>Envoi...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send size={18} />
+                      <span>Envoyer le code</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* Step 2: Code */}
+            {forgotStep === 2 && (
+              <div className="forgot-modal-form">
+                <div className="forgot-modal-info" style={{ marginBottom: '8px' }}>
+                  <Mail size={16} />
+                  <span>Un code a été envoyé à <strong>{forgotEmail}</strong></span>
+                </div>
+                <div className="forgot-modal-input-group">
+                  <label>Code de vérification</label>
+                  <input
+                    type="text"
+                    className="forgot-modal-input"
+                    placeholder="123456"
+                    value={forgotCode}
+                    onChange={(e) => setForgotCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    onKeyDown={(e) => e.key === 'Enter' && handleVerifyCode()}
+                    maxLength={6}
+                    autoFocus
+                  />
+                </div>
+                <button 
+                  className="forgot-modal-btn" 
+                  onClick={handleVerifyCode}
+                >
+                  <ArrowRight size={18} />
+                  <span>Vérifier le code</span>
+                </button>
+                <button 
+                  className="forgot-modal-back-btn" 
+                  onClick={() => setForgotStep(1)}
+                >
+                  <ArrowLeft size={16} />
+                  <span>Retour</span>
+                </button>
+                <div className="forgot-modal-resend">
+                  Vous n'avez pas reçu le code ?{' '}
+                  <button onClick={handleSendCode} disabled={forgotLoading}>
+                    {forgotLoading ? 'Envoi...' : 'Renvoyer'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: New Password */}
+            {forgotStep === 3 && (
+              <div className="forgot-modal-form">
+                <div className="forgot-modal-input-group">
+                  <label>Nouveau mot de passe</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showForgotPasswordInput ? 'text' : 'password'}
+                      className="forgot-modal-input"
+                      placeholder="Minimum 6 caractères"
+                      value={forgotNewPassword}
+                      onChange={(e) => setForgotNewPassword(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && document.getElementById('confirm-password').focus()}
+                      autoFocus
+                      style={{ paddingRight: '48px' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPasswordInput(!showForgotPasswordInput)}
+                      className="forgot-password-toggle"
+                    >
+                      {showForgotPasswordInput ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+                <div className="forgot-modal-input-group">
+                  <label>Confirmer le mot de passe</label>
+                  <input
+                    id="confirm-password"
+                    type={showForgotPasswordInput ? 'text' : 'password'}
+                    className="forgot-modal-input"
+                    placeholder="Confirmez votre mot de passe"
+                    value={forgotConfirmPassword}
+                    onChange={(e) => setForgotConfirmPassword(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleResetPassword()}
+                  />
+                </div>
+                <button 
+                  className="forgot-modal-btn" 
+                  onClick={handleResetPassword}
+                  disabled={forgotLoading}
+                >
+                  {forgotLoading ? (
+                    <>
+                      <Loader2 size={18} className="spin-icon" />
+                      <span>Réinitialisation...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock size={18} />
+                      <span>Réinitialiser le mot de passe</span>
+                    </>
+                  )}
+                </button>
+                <button 
+                  className="forgot-modal-back-btn" 
+                  onClick={() => setForgotStep(2)}
+                >
+                  <ArrowLeft size={16} />
+                  <span>Retour</span>
+                </button>
+              </div>
+            )}
+
+            {/* Step 4: Success */}
+            {forgotStep === 4 && (
+              <div className="forgot-modal-success">
+                <div className="forgot-modal-success-icon">
+                  <CheckCircle2 size={36} />
+                </div>
+                <h4>Mot de passe réinitialisé !</h4>
+                <p>Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.</p>
+                <button 
+                  className="forgot-modal-btn" 
+                  onClick={closeForgotModal}
+                  style={{ marginTop: '24px' }}
+                >
+                  <LogIn size={18} />
+                  <span>Se connecter</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default Login;
+
