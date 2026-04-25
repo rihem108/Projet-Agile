@@ -44,6 +44,15 @@ export const api = {
     if (!res.ok) throw new Error(await readErrorMessage(res));
     return res.json();
   },
+  postPublic: async (endpoint, data) => {
+    const res = await fetch(`${BASE_URL}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error(await readErrorMessage(res));
+    return res.json();
+  },
   put: async (endpoint, data) => {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
       method: 'PUT',

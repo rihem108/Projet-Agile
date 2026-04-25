@@ -67,10 +67,13 @@ const Login = () => {
     }
 
     try {
-      await api.postPublic('/auth/forgot-password', { email: normalizedEmail });
-      toast.success('Code de vérification envoyé par email.');
+      const response = await api.postPublic('/auth/forgot-password', { email: normalizedEmail });
 
-      const code = window.prompt('Entrez le code reçu par email :');
+      if (response?.code) {
+        window.alert(`Votre code de vérification est : ${response.code}\n(Ce code est valable 15 minutes)`);
+      }
+
+      const code = window.prompt('Entrez le code reçu :');
       if (!code) {
         toast.error('Réinitialisation annulée.');
         return;

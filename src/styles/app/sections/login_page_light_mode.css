@@ -568,6 +568,9 @@
   font-weight: 500;
   cursor: pointer;
   transition: color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .forgot-link-glass:hover {

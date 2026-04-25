@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+ const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -11,7 +11,9 @@ const UserSchema = new mongoose.Schema({
     required: function () {
       return this.role === 'Student';
     }
-  }
+  },
+  resetCode: { type: String, default: null },
+  resetCodeExpires: { type: Date, default: null }
 }, { timestamps: true });
 
 UserSchema.set('toJSON', {

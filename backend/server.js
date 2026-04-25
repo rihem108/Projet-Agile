@@ -23,8 +23,9 @@ mongoose.connect(mongoURI)
 
 // ========== AUTH ========== //
 const authMiddleware = (req, res, next) => {
-  // Ignorer pour login, register et seed
-  if (req.path === '/auth/login' || req.path === '/auth/register' || req.path === '/seed' || req.path === '/api/seed') return next();
+  // Ignorer pour login, register, forgot-password, reset-password et seed
+  const publicPaths = ['/auth/login', '/auth/register', '/auth/forgot-password', '/auth/reset-password', '/seed', '/api/seed'];
+  if (publicPaths.includes(req.path)) return next();
   
   const authHeader = req.header('Authorization');
   if (!authHeader) return res.status(401).json({ message: 'Accès refusé. Token manquant.' });
@@ -84,6 +85,53 @@ app.get('/api/auth/me', async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     res.json(user);
+  } catch(err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+app.post('/api/auth/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: 'Aucun compte associé à cet email.' });
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    user.resetCode = code;
+    user.resetCodeExpires = expires;
+    await user.save();
+
+    res.json({ message: 'Code de vérification généré.', code });
+  } catch(err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: 'Utilisateur introuvable.' });
+
+    if (user.resetCode !== String(code).trim()) {
+      return res.status(400).json({ message: 'Code invalide.' });
+    }
+    if (!user.resetCodeExpires || new Date() > user.resetCodeExpires) {
+      return res.status(400).json({ message: 'Code expiré.' });
+    }
+    if (!newPassword || String(newPassword).trim().length < 6) {
+      return res.status(400).json({ message: 'Le mot de passe doit contenir au moins 6 caractères.' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(String(newPassword).trim(), salt);
+    user.resetCode = null;
+    user.resetCodeExpires = null;
+    await user.save();
+
+    res.json({ message: 'Mot de passe réinitialisé avec succès.' });
   } catch(err) {
     res.status(500).json({ message: 'Erreur serveur' });
   }
