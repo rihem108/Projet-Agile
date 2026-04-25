@@ -1,21 +1,43 @@
 // src/pages/ReportsPage.jsx
-import React, { useState } from 'react';
-import { FileText, Printer, Download, Calendar, Clock, MapPin, User, AlertCircle, CheckCircle, TrendingUp, Filter, Search } from 'lucide-react';
+import React, { useState, useContext } from 'react';
+import { FileText, Printer, Download, Calendar, Clock, MapPin, User, AlertCircle, CheckCircle, TrendingUp, Filter, Search, GraduationCap } from 'lucide-react';
+import { AppContext } from '../context/AppContext';
 
 const ReportsPage = () => {
+  const { exams, assignments, rooms, users } = useContext(AppContext);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
-  const exams = [
-    { id: 1, subject: 'Mathématiques', code: 'MATH201', date: '2026-05-15', time: '09:00', duration: '2h', room: 'Non assignée', supervisor: 'Non assigné', status: 'scheduled', students: 45 },
-    { id: 2, subject: 'Physique', code: 'PHY301', date: '2026-05-16', time: '14:00', duration: '1h30', room: 'Non assignée', supervisor: 'Non assigné', status: 'scheduled', students: 32 },
-    { id: 3, subject: 'Informatique', code: 'INF101', date: '2026-05-18', time: '10:00', duration: '3h', room: 'Salle A101', supervisor: 'M. Ben Ali', status: 'scheduled', students: 28 },
-    { id: 4, subject: 'Anglais', code: 'ANG202', date: '2026-05-20', time: '08:30', duration: '1h', room: 'Salle B202', supervisor: 'Mme Martin', status: 'completed', students: 38 },
-  ];
+  // Get teachers
+  const teachers = users?.filter(u => u.role === 'Teacher') || [];
 
-  const filteredExams = exams.filter(exam => {
+  // Create exam reports with assignment data
+  const createExamReports = () => {
+    return exams?.map(exam => {
+      const assignment = assignments?.find(a => a.examId === exam.id);
+      const room = rooms?.find(r => r.id === assignment?.roomId);
+      const supervisor = teachers?.find(t => t.id === assignment?.supervisorId);
+      
+      return {
+        id: exam.id,
+        subject: exam.subject,
+        code: exam.code,
+        date: exam.date,
+        time: exam.time,
+        duration: exam.duration,
+        room: room?.name || 'Non assignée',
+        supervisor: supervisor?.name || 'Non assigné',
+        status: exam.status,
+        students: 45 // This could be calculated from actual student data
+      };
+    }) || [];
+  };
+
+  const examReports = createExamReports();
+
+  const filteredExams = examReports.filter(exam => {
     const matchesSearch = exam.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          exam.code.toLowerCase().includes(searchTerm.toLowerCase());
+                          (exam.code && exam.code.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesFilter = filterStatus === 'all' || exam.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
@@ -94,7 +116,7 @@ const ReportsPage = () => {
           <Search size={18} />
           <input 
             type="text" 
-            placeholder="Rechercher une matière..." 
+            placeholder="Rechercher par matière ou code..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -126,6 +148,7 @@ const ReportsPage = () => {
                 <th>Horaire</th>
                 <th>Durée</th>
                 <th>Salle</th>
+                <th>Surveillant</th>
                 <th>Étudiants</th>
                 <th>Statut</th>
               </tr>
@@ -134,9 +157,9 @@ const ReportsPage = () => {
               {filteredExams.map((exam) => (
                 <tr key={exam.id}>
                   <td className="subject-cell">{exam.subject}</td>
-                  <td className="code-cell">{exam.code}</td>
+                  <td className="code-cell">{exam.code || '-'}</td>
                   <td>{new Date(exam.date).toLocaleDateString('fr-FR')}</td>
-                  <td>{exam.time}</td>
+                  <td>{exam.time || '-'}</td>
                   <td>{exam.duration}</td>
                   <td>
                     {exam.room === 'Non assignée' ? (
@@ -146,6 +169,19 @@ const ReportsPage = () => {
                       </span>
                     ) : (
                       <span className="room-badge">{exam.room}</span>
+                    )}
+                  </td>
+                  <td>
+                    {exam.supervisor === 'Non assigné' ? (
+                      <span className="unassigned-badge">
+                        <AlertCircle size={12} />
+                        À assigner
+                      </span>
+                    ) : (
+                      <span className="supervisor-badge">
+                        <GraduationCap size={12} />
+                        {exam.supervisor}
+                      </span>
                     )}
                   </td>
                   <td className="students-cell">{exam.students}</td>

@@ -146,12 +146,14 @@ app.post('/api/exams', async (req, res) => {
     return res.status(403).json({ message: 'Accès refusé' });
   }
 
-  const { subject, className, date, duration } = req.body;
+  const { subject, className, date, time, duration, coefficient } = req.body;
   const exam = new Exam({
     subject,
     className: String(className || '').trim(),
     date,
+    time,
     duration,
+    coefficient: String(coefficient || '').trim(),
     createdBy: req.user?.id
   });
   await exam.save();
@@ -167,11 +169,13 @@ app.put('/api/exams/:id', async (req, res) => {
     return res.status(404).json({ message: 'Exam not found' });
   }
 
-  const { subject, className, date, duration } = req.body;
+  const { subject, className, date, time, duration, coefficient } = req.body;
   if (subject !== undefined) exam.subject = subject;
   if (className !== undefined) exam.className = String(className || '').trim();
   if (date !== undefined) exam.date = date;
+  if (time !== undefined) exam.time = time;
   if (duration !== undefined) exam.duration = duration;
+  if (coefficient !== undefined) exam.coefficient = String(coefficient || '').trim();
 
   await exam.save();
   res.json(exam);
@@ -265,6 +269,31 @@ app.delete('/api/rooms/:id', async (req, res) => {
 app.get('/api/assignments', async (req, res) => {
   const list = await Assignment.find();
   res.json(list);
+});
+app.post('/api/assignments', async (req, res) => {
+  try {
+    const assignment = new Assignment(req.body);
+    await assignment.save();
+    res.json(assignment);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+app.put('/api/assignments/:id', async (req, res) => {
+  try {
+    const assignment = await Assignment.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(assignment);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+app.delete('/api/assignments/:id', async (req, res) => {
+  try {
+    await Assignment.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Assignment deleted' });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
 });
 app.post('/api/assignments/bulk', async (req, res) => {
   await Assignment.deleteMany({});

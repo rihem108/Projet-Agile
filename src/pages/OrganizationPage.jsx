@@ -2,30 +2,58 @@ import React, { useContext, useState } from 'react';
 import { CalendarCog, Check, Building2, DoorOpen, Users, Clock, AlertCircle, RefreshCw, UserCheck, MapPin } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import { api } from '../api';
+import toast from 'react-hot-toast';
 
 const OrganizationPage = () => {
-  const { exams, rooms, users, assignments, setAssignments } = useContext(AppContext);
+  const { exams, rooms, users, assignments, addAssignment, setAssignments } = useContext(AppContext);
   const [loading, setLoading] = useState(false);
 
   const generateAutoAssignments = async () => {
+    if (exams.length === 0) {
+      toast.error('Aucun examen disponible pour l\'affectation');
+      return;
+    }
+    
+    if (rooms.length === 0 || users.filter(u => u.role === 'Teacher').length === 0) {
+      toast.error('Veuillez ajouter des salles et des surveillants avant de lancer l\'affectation');
+      return;
+    }
+    
     setLoading(true);
+    toast.success('Génération des affectations en cours...');
+    
     // Simulate delay for better UX
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     const teachers = users.filter(u => u.role === 'Teacher');
-    const newAssignments = exams.map((exam, index) => {
-      const room = rooms[index % rooms.length] || rooms[0];
-      const teacher = teachers[index % teachers.length] || teachers[0];
-      return {
-        id: index + 1,
+    let successCount = 0;
+    
+    // Generate assignments and save them to backend
+    for (let i = 0; i < exams.length; i++) {
+      const exam = exams[i];
+      const room = rooms[i % rooms.length] || rooms[0];
+      const teacher = teachers[i % teachers.length] || teachers[0];
+      
+      const assignmentData = {
         examId: exam.id,
         roomId: room?.id,
-        supervisorId: teacher?.id
+        supervisorId: teacher?.id,
+        date: exam.date,
+        time: exam.time,
+        status: 'scheduled'
       };
-    });
+      
+      const result = await addAssignment(assignmentData);
+      if (result) successCount++;
+    }
     
-    setAssignments(newAssignments);
     setLoading(false);
+    
+    if (successCount > 0) {
+      toast.success(`${successCount} affectations générées avec succès!`);
+    } else {
+      toast.error('Erreur lors de la génération des affectations');
+    }
   };
 
   const getExamSubject = (id) => exams.find(e => e.id === id)?.subject || 'Inconnu';

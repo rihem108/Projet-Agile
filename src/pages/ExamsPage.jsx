@@ -43,8 +43,6 @@ const ExamsPage = () => {
     date: '',
     time: '',
     duration: '',
-    room: '',
-    supervisor: '',
     coefficient: '',
     maxScore: '100',
     type: 'normal',
@@ -107,8 +105,6 @@ const ExamsPage = () => {
       date: '',
       time: '',
       duration: '',
-      room: '',
-      supervisor: '',
       coefficient: '',
       maxScore: '100',
       type: 'normal',
@@ -131,8 +127,6 @@ const ExamsPage = () => {
       date: exam.date,
       time: exam.time,
       duration: exam.duration,
-      room: exam.room,
-      supervisor: exam.supervisor,
       coefficient: exam.coefficient,
       maxScore: exam.maxScore || '100',
       type: exam.type || 'normal',
@@ -179,8 +173,6 @@ const ExamsPage = () => {
       date: formData.date,
       time: formData.time,
       duration: formData.duration,
-      room: formData.room,
-      supervisor: formData.supervisor,
       coefficient: formData.coefficient,
       maxScore: formData.maxScore,
       type: formData.type,
@@ -348,8 +340,6 @@ const ExamsPage = () => {
                   <th>Examen</th>
                   <th>Date & Horaire</th>
                   <th>Durée</th>
-                  <th>Salle</th>
-                  {canSeeSupervisor && <th>Surveillant</th>}
                   <th>Coeff</th>
                   <th>Type</th>
                   <th>Statut</th>
@@ -384,24 +374,6 @@ const ExamsPage = () => {
                         <span>{exam.duration}</span>
                       </div>
                     </td>
-                    <td className="room-cell">
-                      {String(exam.room || '').trim() ? (
-                        <div className="exam-room">
-                          <MapPin size={14} />
-                          <span>{exam.room}</span>
-                        </div>
-                      ) : (
-                        <span className="exam-empty-value">-</span>
-                      )}
-                    </td>
-                    {canSeeSupervisor && (
-                      <td className="supervisor-cell">
-                        <div className="exam-supervisor">
-                          <GraduationCap size={14} />
-                          <span>{exam.supervisor}</span>
-                        </div>
-                      </td>
-                    )}
                     <td className="coefficient-cell">
                       {String(exam.coefficient || '').trim() ? (
                         <span className="exam-coefficient">{exam.coefficient}</span>
@@ -494,22 +466,6 @@ const ExamsPage = () => {
                   </div>
                 </div>
                 <div className="detail-item">
-                  <MapPin size={16} />
-                  <div>
-                    <label>Salle</label>
-                    <p>{selectedExam.room}</p>
-                  </div>
-                </div>
-                {canSeeSupervisor && (
-                  <div className="detail-item">
-                    <GraduationCap size={16} />
-                    <div>
-                      <label>Surveillant</label>
-                      <p>{selectedExam.supervisor}</p>
-                    </div>
-                  </div>
-                )}
-                <div className="detail-item">
                   <Award size={16} />
                   <div>
                     <label>Coefficient</label>
@@ -591,22 +547,10 @@ const ExamsPage = () => {
                   <input type="text" value={formData.duration} onChange={(e) => setFormData({...formData, duration: e.target.value})} placeholder="2h, 1h30..." />
                 </div>
               </div>
-              {canAdminSetRoomAndSupervisor && editingExam && (
-                <div className="exams-form-row">
-                  <div className="exams-form-group">
-                    <label>Salle</label>
-                    <input type="text" value={formData.room} onChange={(e) => setFormData({...formData, room: e.target.value})} placeholder="Salle d'examen" />
-                  </div>
-                  <div className="exams-form-group">
-                    <label>Surveillant</label>
-                    <input type="text" value={formData.supervisor} onChange={(e) => setFormData({...formData, supervisor: e.target.value})} placeholder="Nom du surveillant" />
-                  </div>
-                </div>
-              )}
               <div className="exams-form-row">
                 <div className="exams-form-group">
                   <label>Coefficient</label>
-                  <input type="number" value={formData.coefficient} onChange={(e) => setFormData({...formData, coefficient: e.target.value})} placeholder="Coefficient" />
+                  <input type="text" value={formData.coefficient} onChange={(e) => setFormData({...formData, coefficient: e.target.value})} placeholder="Coefficient" />
                 </div>
                 <div className="exams-form-group">
                   <label>Note maximale</label>
