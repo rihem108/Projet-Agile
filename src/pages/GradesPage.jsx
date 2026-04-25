@@ -1,40 +1,34 @@
-import React, { useContext, useMemo, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { CheckCircle, ShieldAlert, Save, Trash2, BookOpen, Clock, Award, ClipboardList } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import { api } from '../api';
 import toast from 'react-hot-toast';
 
 const GradesPage = () => {
-  const { grades, users, exams, assignments, setGrades, user } = useContext(AppContext);
+  const { grades, users, exams, setGrades, user } = useContext(AppContext);
   const isTeacher = user?.role === 'Teacher';
   const isStaff = user?.role === 'Teacher' || user?.role === 'Admin';
-  const [formData, setFormData] = useState({ examId: '', studentId: '', grade: '' });
+  const [formData, setFormData] = useState({ className: '', examName: '', studentName: '', grade: '' });
   const [saving, setSaving] = useState(false);
 
   const getStudentName = (id) => users.find(u => u.id === id)?.name || 'Inconnu';
   const getExamSubject = (id) => exams.find(e => e.id === id)?.subject || 'Inconnu';
 
-  const selectableExams = useMemo(() => {
-    if (user?.role === 'Admin') return exams;
-    if (user?.role === 'Teacher') {
-      const assignedExamIds = new Set(
-        assignments
-          .filter(item => item.supervisorId === user.id)
-          .map(item => item.examId)
-      );
-      return exams.filter(exam => assignedExamIds.has(exam.id));
-    }
-    return [];
-  }, [assignments, exams, user]);
-
-  const selectableStudents = useMemo(() => {
-    if (!formData.examId) return [];
-    const exam = exams.find(item => item.id === formData.examId);
-    if (!exam) return [];
-    return users
-      .filter(person => person.role === 'Student' && String(person.className || '').trim() === String(exam.className || '').trim())
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [exams, formData.examId, users]);
+  // Available classes — hardcoded list
+  const AVAILABLE_CLASSES = [
+    'L1 Tech',
+    'L2 Tech',
+    'L3 Tech',
+    'M1 Tech',
+    'M2 Tech',
+    'L1 Business',
+    'L2 Business',
+    'L3 Business',
+    'M1 Business',
+    'M2 Business',
+    "Cycle d'ingénieur",
+    'Cycle préparatoire',
+  ];
 
   const handleValidate = async (gradeId) => {
     try {
@@ -49,16 +43,50 @@ const GradesPage = () => {
 
   const handleCreateOrUpdate = async (e) => {
     e.preventDefault();
-    if (!formData.examId || !formData.studentId || formData.grade === '') {
+    if (!formData.className || !formData.examName.trim() || !formData.studentName.trim() || formData.grade === '') {
       toast.error('Veuillez remplir tous les champs');
+      return;
+    }
+
+    // Find exam by name (flexible match)
+    const searchExamName = formData.examName.toLowerCase().trim();
+    const selectedClass = formData.className.trim().toLowerCase();
+    const exam = exams.find(e => {
+      const examClass = String(e.className || '').trim().toLowerCase();
+      const examSubject = String(e.subject || '').trim().toLowerCase();
+      const classMatch = examClass === selectedClass || examClass.includes(selectedClass) || selectedClass.includes(examClass);
+      const subjectMatch = examSubject.includes(searchExamName) || searchExamName.includes(examSubject);
+      return classMatch && subjectMatch;
+    });
+    if (!exam) {
+      console.log('DEBUG - All exams:', exams);
+      console.log('DEBUG - Searching class:', formData.className, 'subject:', formData.examName);
+      const allExamsList = exams.length ? exams.map(e => `  - ${e.subject} (classe: ${e.className})`).join(' | ') : '(aucun examen dans le systeme)';
+      toast.error(`Examen "${formData.examName}" non trouve pour ${formData.className}. Examens existants: ${allExamsList}`, { duration: 8000 });
+      return;
+    }
+
+    // Find student by name (flexible match)
+    const searchStudentName = formData.studentName.toLowerCase().trim();
+    const student = users.find(u => {
+      const userClass = String(u.className || '').trim().toLowerCase();
+      const userName = String(u.name || '').trim().toLowerCase();
+      const classMatch = userClass === selectedClass || userClass.includes(selectedClass) || selectedClass.includes(userClass);
+      const nameMatch = userName.includes(searchStudentName) || searchStudentName.includes(userName);
+      return u.role === 'Student' && classMatch && nameMatch;
+    });
+    if (!student) {
+      console.log('DEBUG - All students:', users.filter(u => u.role === 'Student'));
+      const allStudentsList = users.filter(u => u.role === 'Student').map(u => `  - ${u.name} (classe: ${u.className})`).join(' | ') || '(aucun etudiant dans le systeme)';
+      toast.error(`Etudiant "${formData.studentName}" non trouve pour ${formData.className}. Etudiants existants: ${allStudentsList}`, { duration: 8000 });
       return;
     }
 
     try {
       setSaving(true);
       await api.post('/grades', {
-        examId: formData.examId,
-        studentId: formData.studentId,
+        examId: exam.id,
+        studentId: student.id,
         grade: Number(formData.grade),
         validated: false
       });
@@ -66,7 +94,7 @@ const GradesPage = () => {
       const refreshedGrades = await api.get('/grades');
       setGrades(refreshedGrades);
       toast.success('Note enregistrée');
-      setFormData(current => ({ ...current, grade: '' }));
+      setFormData({ className: '', examName: '', studentName: '', grade: '' });
     } catch (err) {
       console.error(err);
       toast.error('Enregistrement de la note impossible');
@@ -165,32 +193,40 @@ const GradesPage = () => {
           <form onSubmit={handleCreateOrUpdate}>
             <div className="grades-form-grid">
               <div className="grades-form-group">
-                <label>Examen / Matière</label>
+                <label>Classe</label>
                 <select
-                  value={formData.examId}
-                  onChange={(e) => setFormData({ examId: e.target.value, studentId: '', grade: '' })}
-                  required
+                  value={formData.className}
+                  onChange={(e) => setFormData({ className: e.target.value, examId: '', studentId: '', grade: '' })}
                 >
-                  <option value="">Sélectionner un examen</option>
-                  {selectableExams.map(exam => (
-                    <option key={exam.id} value={exam.id}>{exam.subject} - {exam.className}</option>
+                  <option value="">Toutes les classes</option>
+                  {AVAILABLE_CLASSES.map(cls => (
+                    <option key={cls} value={cls}>{cls}</option>
                   ))}
                 </select>
               </div>
 
               <div className="grades-form-group">
-                <label>Étudiant</label>
-                <select
-                  value={formData.studentId}
-                  onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
+                <label>Examen / Matière</label>
+                <input
+                  type="text"
+                  placeholder="Entrer le nom de l'examen"
+                  value={formData.examName}
+                  onChange={(e) => setFormData({ ...formData, examName: e.target.value })}
                   required
-                  disabled={!formData.examId}
-                >
-                  <option value="">Sélectionner un étudiant</option>
-                  {selectableStudents.map(student => (
-                    <option key={student.id} value={student.id}>{student.name}</option>
-                  ))}
-                </select>
+                  disabled={!formData.className}
+                />
+              </div>
+
+              <div className="grades-form-group">
+                <label>Étudiant</label>
+                <input
+                  type="text"
+                  placeholder="Entrer le nom de l'étudiant"
+                  value={formData.studentName}
+                  onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
+                  required
+                  disabled={!formData.className}
+                />
               </div>
 
               <div className="grades-form-group">

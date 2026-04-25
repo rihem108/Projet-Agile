@@ -156,9 +156,9 @@
 
 .grades-form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
-  align-items: end;
+  align-items: start;
 }
 
 .grades-form-group {
@@ -202,10 +202,11 @@
 }
 
 .grades-form-note {
+  grid-column: 1 / -1;
   font-size: 13px;
   color: var(--gray);
   line-height: 1.4;
-  padding-bottom: 10px;
+  padding-top: 4px;
 }
 
 .grades-submit-btn {

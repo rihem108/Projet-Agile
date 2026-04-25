@@ -267,8 +267,63 @@ app.delete('/api/rooms/:id', async (req, res) => {
 
 // ASSIGNMENTS
 app.get('/api/assignments', async (req, res) => {
-  const list = await Assignment.find();
-  res.json(list);
+  try {
+    const list = await Assignment.find()
+      .populate('examId', 'subject className date duration')
+      .populate('roomId', 'name capacity')
+      .populate('supervisorId', 'name email role');
+    res.json(list);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+app.post('/api/assignments', async (req, res) => {
+  try {
+    const { examId, roomId, supervisorId } = req.body;
+    if (!examId || !roomId || !supervisorId) {
+      return res.status(400).json({ message: 'examId, roomId et supervisorId sont obligatoires' });
+    }
+
+    const assignment = new Assignment({ examId, roomId, supervisorId });
+    await assignment.save();
+    const populated = await Assignment.findById(assignment._id)
+      .populate('examId', 'subject className date duration')
+      .populate('roomId', 'name capacity')
+      .populate('supervisorId', 'name email role');
+    res.json(populated);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+app.put('/api/assignments/:id', async (req, res) => {
+  try {
+    const { examId, roomId, supervisorId } = req.body;
+    const assignment = await Assignment.findById(req.params.id);
+    if (!assignment) {
+      return res.status(404).json({ message: 'Affectation introuvable' });
+    }
+
+    if (examId) assignment.examId = examId;
+    if (roomId) assignment.roomId = roomId;
+    if (supervisorId) assignment.supervisorId = supervisorId;
+
+    await assignment.save();
+    const populated = await Assignment.findById(assignment._id)
+      .populate('examId', 'subject className date duration')
+      .populate('roomId', 'name capacity')
+      .populate('supervisorId', 'name email role');
+    res.json(populated);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+app.delete('/api/assignments/:id', async (req, res) => {
+  try {
+    await Assignment.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Affectation supprimée' });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
 });
 app.post('/api/assignments', async (req, res) => {
   try {
@@ -296,9 +351,13 @@ app.delete('/api/assignments/:id', async (req, res) => {
   }
 });
 app.post('/api/assignments/bulk', async (req, res) => {
-  await Assignment.deleteMany({});
-  const result = await Assignment.insertMany(req.body);
-  res.json(result);
+  try {
+    await Assignment.deleteMany({});
+    const result = await Assignment.insertMany(req.body);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
 });
 
 // GRADES
