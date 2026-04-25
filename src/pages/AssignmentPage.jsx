@@ -20,7 +20,7 @@ import { AppContext } from '../context/AppContext';
 import toast from 'react-hot-toast';
 
 const AssignmentPage = () => {
-  const { exams, rooms, users, assignments, setAssignments } = useContext(AppContext);
+  const { exams, rooms, users, assignments, addAssignment, updateAssignment, deleteAssignment } = useContext(AppContext);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showModal, setShowModal] = useState(false);
@@ -36,18 +36,8 @@ const AssignmentPage = () => {
   // Get teachers
   const teachers = users?.filter(u => u.role === 'Teacher') || [];
   
-  // Mock assignments data if empty
-  const [localAssignments, setLocalAssignments] = useState([
-    { id: 1, examId: 1, roomId: 1, supervisorId: 2, status: 'scheduled', date: '2026-05-15', time: '09:00' },
-    { id: 2, examId: 2, roomId: 2, supervisorId: 3, status: 'scheduled', date: '2026-05-16', time: '14:00' },
-    { id: 3, examId: 3, roomId: 1, supervisorId: 2, status: 'scheduled', date: '2026-05-18', time: '10:00' },
-  ]);
-
-  useEffect(() => {
-    if (assignments && assignments.length > 0) {
-      setLocalAssignments(assignments);
-    }
-  }, [assignments]);
+  // Use backend assignments data
+  const localAssignments = assignments || [];
 
   const getExamSubject = (id) => exams?.find(e => e.id === id)?.subject || 'Inconnu';
   const getExamDuration = (id) => exams?.find(e => e.id === id)?.duration || '2h';
@@ -84,34 +74,52 @@ const AssignmentPage = () => {
     setShowModal(true);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette affectation ?')) {
-      setLocalAssignments(localAssignments.filter(a => a.id !== id));
-      toast.success('Affectation supprimée avec succès');
+  // Auto-populate date and time when exam is selected
+  const handleExamChange = (examId) => {
+    const selectedExam = exams?.find(e => e.id === parseInt(examId));
+    if (selectedExam) {
+      setFormData(prev => ({
+        ...prev,
+        date: prev.date || selectedExam.date || '',
+        time: prev.time || selectedExam.time || ''
+      }));
     }
   };
 
-  const handleSubmit = () => {
+  const handleDelete = async (id) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette affectation ?')) {
+      const deleted = await deleteAssignment(id);
+      if (!deleted) {
+        toast('Suppression locale uniquement (serveur indisponible).', { icon: '⚠️' });
+      }
+    }
+  };
+
+  const handleSubmit = async () => {
     if (!formData.examId || !formData.roomId || !formData.supervisorId) {
       toast.error('Veuillez remplir tous les champs');
       return;
     }
 
+    const assignmentPayload = {
+      examId: parseInt(formData.examId),
+      roomId: parseInt(formData.roomId),
+      supervisorId: parseInt(formData.supervisorId),
+      date: formData.date,
+      time: formData.time,
+      status: 'scheduled'
+    };
+
     if (editingAssignment) {
-      setLocalAssignments(localAssignments.map(a => 
-        a.id === editingAssignment.id 
-          ? { ...a, ...formData, status: 'scheduled' }
-          : a
-      ));
-      toast.success('Affectation modifiée avec succès');
+      const updated = await updateAssignment(editingAssignment.id, assignmentPayload);
+      if (!updated) {
+        toast('Modification locale uniquement (serveur indisponible).', { icon: '⚠️' });
+      }
     } else {
-      const newAssignment = {
-        id: Date.now(),
-        ...formData,
-        status: 'scheduled'
-      };
-      setLocalAssignments([...localAssignments, newAssignment]);
-      toast.success('Affectation ajoutée avec succès');
+      const added = await addAssignment(assignmentPayload);
+      if (!added) {
+        toast('Ajout local uniquement (serveur indisponible).', { icon: '⚠️' });
+      }
     }
     setShowModal(false);
   };
@@ -310,7 +318,10 @@ const AssignmentPage = () => {
                 <select 
                   className="assignment-form-select"
                   value={formData.examId}
-                  onChange={(e) => setFormData({...formData, examId: parseInt(e.target.value)})}
+                  onChange={(e) => {
+                    setFormData({...formData, examId: parseInt(e.target.value)});
+                    handleExamChange(parseInt(e.target.value));
+                  }}
                 >
                   <option value="">Sélectionner un examen</option>
                   {exams?.map(exam => (

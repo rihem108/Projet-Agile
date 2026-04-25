@@ -31,12 +31,14 @@ const ExamsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
+  const [hasHydratedExams, setHasHydratedExams] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingExam, setEditingExam] = useState(null);
   const [selectedExam, setSelectedExam] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const [formData, setFormData] = useState({
     subject: '',
+    className: '',
     code: '',
     date: '',
     time: '',
@@ -52,16 +54,29 @@ const ExamsPage = () => {
 
   const canEdit = user?.role === 'Admin' || user?.role === 'Teacher';
   const canSeeSupervisor = user?.role !== 'Student';
+  const canAdminSetRoomAndSupervisor = true;
+  const examsStorageKey = 'exams:persisted';
   const visibleExams = user?.role === 'Teacher'
     ? localExams.filter(exam => 
         String(exam.createdBy || '') === String(user.id) || assignments.some(a => a.examId === exam.id && a.supervisorId === user.id)
       )
     : localExams;
   useEffect(() => {
-    if (exams && exams.length > 0) {
+    // Clear stale localStorage data to ensure fresh backend data
+    localStorage.removeItem(examsStorageKey);
+    
+    // Always use fresh backend data
+    if (Array.isArray(exams)) {
       setLocalExams(exams);
     }
-  }, [exams]);
+
+    setHasHydratedExams(true);
+  }, [exams, examsStorageKey]);
+
+  useEffect(() => {
+    if (!hasHydratedExams) return;
+    localStorage.setItem(examsStorageKey, JSON.stringify(localExams));
+  }, [localExams, examsStorageKey, hasHydratedExams]);
 
   const filteredExams = visibleExams.filter(exam => {
     const matchesSearch = exam.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -87,6 +102,7 @@ const ExamsPage = () => {
     setEditingExam(null);
     setFormData({
       subject: '',
+      className: '',
       code: '',
       date: '',
       time: '',
@@ -110,6 +126,7 @@ const ExamsPage = () => {
     setEditingExam(exam);
     setFormData({
       subject: exam.subject,
+      className: exam.className || exam.class || '',
       code: exam.code,
       date: exam.date,
       time: exam.time,
@@ -125,14 +142,17 @@ const ExamsPage = () => {
     setShowModal(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!canEdit) {
       toast.error('Accès refusé');
       return;
     }
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cet examen ?')) {
-      setLocalExams(localExams.filter(e => e.id !== id));
-      toast.success('Examen supprimé avec succès');
+      const deleted = await deleteExam(id);
+      setLocalExams(prev => prev.filter(e => e.id !== id));
+      if (!deleted) {
+        toast('Suppression locale uniquement (serveur indisponible).', { icon: '⚠️' });
+      }
     }
   };
 
@@ -141,34 +161,62 @@ const ExamsPage = () => {
     setShowDetails(true);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!canEdit) {
       toast.error('Accès refusé');
       return;
     }
 
-    if (!formData.subject || !formData.code || !formData.date || !formData.duration) {
+    if (!formData.subject || !formData.className || !formData.code || !formData.date || !formData.duration) {
       toast.error('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
+    const examPayload = {
+      subject: formData.subject,
+      className: formData.className,
+      code: formData.code,
+      date: formData.date,
+      time: formData.time,
+      duration: formData.duration,
+      room: formData.room,
+      supervisor: formData.supervisor,
+      coefficient: formData.coefficient,
+      maxScore: formData.maxScore,
+      type: formData.type,
+      status: formData.status,
+      description: formData.description
+    };
+
     if (editingExam) {
-      setLocalExams(localExams.map(e => 
-        e.id === editingExam.id 
-          ? { ...e, ...formData }
-          : e
-      ));
-      toast.success('Examen modifié avec succès');
+      const updated = await updateExam(editingExam.id, examPayload);
+      if (updated) {
+        setLocalExams(prev => prev.map(e => (e.id === editingExam.id ? updated : e)));
+      } else {
+        const localUpdated = {
+          ...editingExam,
+          ...examPayload,
+          id: editingExam.id
+        };
+        setLocalExams(prev => prev.map(e => (e.id === editingExam.id ? localUpdated : e)));
+        toast('Modifié localement (serveur indisponible).', { icon: '⚠️' });
+      }
     } else {
-      const newExam = {
-        id: Date.now(),
-        ...formData,
-        registeredStudents: 0,
-        completedStudents: 0,
-        avgScore: null
-      };
-      setLocalExams([...localExams, newExam]);
-      toast.success('Examen ajouté avec succès');
+      const created = await addExam(examPayload);
+      if (created) {
+        setLocalExams(prev => [...prev, created]);
+      } else {
+        const localCreated = {
+          id: Date.now(),
+          ...examPayload,
+          createdBy: user?.id || user?._id || null,
+          registeredStudents: 0,
+          completedStudents: 0,
+          avgScore: null
+        };
+        setLocalExams(prev => [...prev, localCreated]);
+        toast('Ajouté localement (serveur indisponible).', { icon: '⚠️' });
+      }
     }
     setShowModal(false);
   };
@@ -204,8 +252,7 @@ const ExamsPage = () => {
             <BookOpen size={28} />
           </div>
           <div>
-            <h1>Gestion des Examens</h1>
-            <p>Planifiez, organisez et suivez tous vos examens</p>
+            <h1>Vos Examens</h1>
           </div>
         </div>
         {canEdit && (
@@ -315,6 +362,7 @@ const ExamsPage = () => {
                     <td className="exam-cell">
                       <div className="exam-info">
                         <div className="exam-subject">{exam.subject}</div>
+                        {exam.className && <div className="exam-code">Classe: {exam.className}</div>}
                         {exam.code && <div className="exam-code">{exam.code}</div>}
                       </div>
                     </td>
@@ -418,6 +466,13 @@ const ExamsPage = () => {
               
               <div className="exam-detail-grid">
                 <div className="detail-item">
+                  <Users size={16} />
+                  <div>
+                    <label>Classe</label>
+                    <p>{selectedExam.className || '-'}</p>
+                  </div>
+                </div>
+                <div className="detail-item">
                   <Calendar size={16} />
                   <div>
                     <label>Date</label>
@@ -514,6 +569,10 @@ const ExamsPage = () => {
                   <input type="text" value={formData.subject} onChange={(e) => setFormData({...formData, subject: e.target.value})} placeholder="Nom de la matière" />
                 </div>
                 <div className="exams-form-group">
+                  <label>Classe *</label>
+                  <input type="text" value={formData.className} onChange={(e) => setFormData({...formData, className: e.target.value})} placeholder="Ex: L1 INFO A" />
+                </div>
+                <div className="exams-form-group">
                   <label>Code *</label>
                   <input type="text" value={formData.code} onChange={(e) => setFormData({...formData, code: e.target.value})} placeholder="Code de l'examen" />
                 </div>
@@ -532,16 +591,18 @@ const ExamsPage = () => {
                   <input type="text" value={formData.duration} onChange={(e) => setFormData({...formData, duration: e.target.value})} placeholder="2h, 1h30..." />
                 </div>
               </div>
-              <div className="exams-form-row">
-                <div className="exams-form-group">
-                  <label>Salle</label>
-                  <input type="text" value={formData.room} onChange={(e) => setFormData({...formData, room: e.target.value})} placeholder="Salle d'examen" />
+              {canAdminSetRoomAndSupervisor && editingExam && (
+                <div className="exams-form-row">
+                  <div className="exams-form-group">
+                    <label>Salle</label>
+                    <input type="text" value={formData.room} onChange={(e) => setFormData({...formData, room: e.target.value})} placeholder="Salle d'examen" />
+                  </div>
+                  <div className="exams-form-group">
+                    <label>Surveillant</label>
+                    <input type="text" value={formData.supervisor} onChange={(e) => setFormData({...formData, supervisor: e.target.value})} placeholder="Nom du surveillant" />
+                  </div>
                 </div>
-                <div className="exams-form-group">
-                  <label>Surveillant</label>
-                  <input type="text" value={formData.supervisor} onChange={(e) => setFormData({...formData, supervisor: e.target.value})} placeholder="Nom du surveillant" />
-                </div>
-              </div>
+              )}
               <div className="exams-form-row">
                 <div className="exams-form-group">
                   <label>Coefficient</label>
