@@ -11,8 +11,23 @@ const GradesPage = () => {
   const [formData, setFormData] = useState({ className: '', examName: '', studentName: '', grade: '' });
   const [saving, setSaving] = useState(false);
 
-  const getStudentName = (id) => users.find(u => u.id === id)?.name || 'Inconnu';
-  const getExamSubject = (id) => exams.find(e => e.id === id)?.subject || 'Inconnu';
+  const getStudentName = (grade) => {
+    // If grade has populated student data, use it directly
+    if (grade.studentId && typeof grade.studentId === 'object') {
+      return grade.studentId.name || 'Inconnu';
+    }
+    // Fallback to looking in users array
+    return users.find(u => u.id === grade.studentId)?.name || 'Inconnu';
+  };
+  
+  const getExamSubject = (grade) => {
+    // If grade has populated exam data, use it directly
+    if (grade.examId && typeof grade.examId === 'object') {
+      return grade.examId.subject || 'Inconnu';
+    }
+    // Fallback to looking in exams array
+    return exams.find(e => e.id === grade.examId)?.subject || 'Inconnu';
+  };
 
   // Available classes — hardcoded list
   const AVAILABLE_CLASSES = [
@@ -116,9 +131,12 @@ const GradesPage = () => {
     }
   };
 
-  const displayGrades = user?.role === 'Student'
-    ? grades.filter(g => g.studentId === user.id && g.validated)
-    : grades;
+  const displayGrades = grades;
+
+  // Debug: Log grades and user info
+  console.log('DEBUG - User:', user?.name, 'ID:', user?.id, 'Role:', user?.role);
+  console.log('DEBUG - Grades:', grades.length, grades);
+  console.log('DEBUG - DisplayGrades:', displayGrades.length);
 
   const pendingGrades = isStaff
     ? displayGrades.filter(g => !g.validated).length
@@ -274,8 +292,8 @@ const GradesPage = () => {
             <tbody>
               {displayGrades.map(grade => (
                 <tr key={grade.id}>
-                  <td className="student-cell">{getStudentName(grade.studentId)}</td>
-                  <td className="subject-cell">{getExamSubject(grade.examId)}</td>
+                  <td className="student-cell">{getStudentName(grade)}</td>
+                  <td className="subject-cell">{getExamSubject(grade)}</td>
                   <td className={`grade-cell ${grade.grade >= 10 ? 'grade-pass' : 'grade-fail'}`}>
                     {grade.grade} / 20
                   </td>
