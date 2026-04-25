@@ -142,6 +142,10 @@ app.get('/api/exams', async (req, res) => {
   }
 });
 app.post('/api/exams', async (req, res) => {
+  if (req.user?.role === 'Student') {
+    return res.status(403).json({ message: 'Accès refusé' });
+  }
+
   const { subject, className, date, duration } = req.body;
   const exam = new Exam({
     subject,
@@ -154,6 +158,10 @@ app.post('/api/exams', async (req, res) => {
   res.json(exam);
 });
 app.put('/api/exams/:id', async (req, res) => {
+  if (req.user?.role === 'Student') {
+    return res.status(403).json({ message: 'Accès refusé' });
+  }
+
   const exam = await Exam.findById(req.params.id);
   if (!exam) {
     return res.status(404).json({ message: 'Exam not found' });
@@ -226,6 +234,10 @@ app.put('/api/exams/:id/attendance', async (req, res) => {
   }
 });
 app.delete('/api/exams/:id', async (req, res) => {
+  if (req.user?.role === 'Student') {
+    return res.status(403).json({ message: 'Accès refusé' });
+  }
+
   await Exam.findByIdAndDelete(req.params.id);
   res.json({ message: 'Exam deleted' });
 });

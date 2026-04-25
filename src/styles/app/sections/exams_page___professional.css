@@ -296,7 +296,6 @@
   vertical-align: middle;
 }
 
-.exams-table th:last-child,
 .exams-table th.exams-actions-header {
   width: 150px;
   min-width: 150px;
@@ -396,6 +395,13 @@
   font-size: 13px;
   font-weight: 600;
   color: #10B981;
+}
+
+.exam-empty-value {
+  display: inline-block;
+  color: #94A3B8;
+  font-weight: 600;
+  line-height: 1;
 }
 
 /* Type Badge */

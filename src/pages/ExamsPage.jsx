@@ -51,13 +51,12 @@ const ExamsPage = () => {
   });
 
   const canEdit = user?.role === 'Admin' || user?.role === 'Teacher';
+  const canSeeSupervisor = user?.role !== 'Student';
   const visibleExams = user?.role === 'Teacher'
     ? localExams.filter(exam => 
         String(exam.createdBy || '') === String(user.id) || assignments.some(a => a.examId === exam.id && a.supervisorId === user.id)
       )
     : localExams;
-  const emptyColSpan = 4 + (user?.role === 'Teacher' ? 1 : 0) + (canEdit ? 1 : 0);
-
   useEffect(() => {
     if (exams && exams.length > 0) {
       setLocalExams(exams);
@@ -81,6 +80,10 @@ const ExamsPage = () => {
   };
 
   const handleAdd = () => {
+    if (!canEdit) {
+      toast.error('Accès refusé');
+      return;
+    }
     setEditingExam(null);
     setFormData({
       subject: '',
@@ -100,6 +103,10 @@ const ExamsPage = () => {
   };
 
   const handleEdit = (exam) => {
+    if (!canEdit) {
+      toast.error('Accès refusé');
+      return;
+    }
     setEditingExam(exam);
     setFormData({
       subject: exam.subject,
@@ -119,6 +126,10 @@ const ExamsPage = () => {
   };
 
   const handleDelete = (id) => {
+    if (!canEdit) {
+      toast.error('Accès refusé');
+      return;
+    }
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cet examen ?')) {
       setLocalExams(localExams.filter(e => e.id !== id));
       toast.success('Examen supprimé avec succès');
@@ -131,6 +142,11 @@ const ExamsPage = () => {
   };
 
   const handleSubmit = () => {
+    if (!canEdit) {
+      toast.error('Accès refusé');
+      return;
+    }
+
     if (!formData.subject || !formData.code || !formData.date || !formData.duration) {
       toast.error('Veuillez remplir tous les champs obligatoires');
       return;
@@ -167,8 +183,7 @@ const ExamsPage = () => {
     const Icon = s.icon;
     return (
       <span className="exam-status-badge" style={{ background: s.bg, color: s.color }}>
-        <Icon size={12} />
-        {s.label}
+        <Icon size={12} />{s.label}
       </span>
     );
   };
@@ -193,10 +208,12 @@ const ExamsPage = () => {
             <p>Planifiez, organisez et suivez tous vos examens</p>
           </div>
         </div>
-        <button className="exams-add-btn" onClick={handleAdd}>
-          <Plus size={18} />
-          Nouvel examen
-        </button>
+        {canEdit && (
+          <button className="exams-add-btn" onClick={handleAdd}>
+            <Plus size={18} />
+            Nouvel examen
+          </button>
+        )}
       </div>
 
       {/* Stats Cards */}
@@ -285,11 +302,11 @@ const ExamsPage = () => {
                   <th>Date & Horaire</th>
                   <th>Durée</th>
                   <th>Salle</th>
-                  <th>Surveillant</th>
+                  {canSeeSupervisor && <th>Surveillant</th>}
                   <th>Coeff</th>
                   <th>Type</th>
                   <th>Statut</th>
-                  <th className="exams-actions-header">Actions</th>
+                  {canEdit && <th className="exams-actions-header">Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -298,15 +315,19 @@ const ExamsPage = () => {
                     <td className="exam-cell">
                       <div className="exam-info">
                         <div className="exam-subject">{exam.subject}</div>
-                        <div className="exam-code">{exam.code}</div>
+                        {exam.code && <div className="exam-code">{exam.code}</div>}
                       </div>
                     </td>
                     <td className="date-cell">
                       <div className="exam-date">
                         <Calendar size={14} />
                         <span>{new Date(exam.date).toLocaleDateString('fr-FR')}</span>
-                        <Clock size={14} />
-                        <span>{exam.time}</span>
+                        {exam.time && (
+                          <>
+                            <Clock size={14} />
+                            <span>{exam.time}</span>
+                          </>
+                        )}
                       </div>
                     </td>
                     <td className="duration-cell">
@@ -316,35 +337,47 @@ const ExamsPage = () => {
                       </div>
                     </td>
                     <td className="room-cell">
-                      <div className="exam-room">
-                        <MapPin size={14} />
-                        <span>{exam.room}</span>
-                      </div>
+                      {String(exam.room || '').trim() ? (
+                        <div className="exam-room">
+                          <MapPin size={14} />
+                          <span>{exam.room}</span>
+                        </div>
+                      ) : (
+                        <span className="exam-empty-value">-</span>
+                      )}
                     </td>
-                    <td className="supervisor-cell">
-                      <div className="exam-supervisor">
-                        <GraduationCap size={14} />
-                        <span>{exam.supervisor}</span>
-                      </div>
-                    </td>
+                    {canSeeSupervisor && (
+                      <td className="supervisor-cell">
+                        <div className="exam-supervisor">
+                          <GraduationCap size={14} />
+                          <span>{exam.supervisor}</span>
+                        </div>
+                      </td>
+                    )}
                     <td className="coefficient-cell">
-                      <span className="exam-coefficient">{exam.coefficient}</span>
+                      {String(exam.coefficient || '').trim() ? (
+                        <span className="exam-coefficient">{exam.coefficient}</span>
+                      ) : (
+                        <span className="exam-empty-value">-</span>
+                      )}
                     </td>
                     <td>{getTypeBadge(exam.type)}</td>
                     <td>{getStatusBadge(exam.status)}</td>
-                    <td className="exams-actions-cell">
-                      <div className="exams-actions">
-                        <button className="exams-action-btn view" onClick={() => handleViewDetails(exam)} title="Voir détails">
-                          <Eye size={16} />
-                        </button>
-                        <button className="exams-action-btn edit" onClick={() => handleEdit(exam)} title="Modifier">
-                          <Edit size={16} />
-                        </button>
-                        <button className="exams-action-btn delete" onClick={() => handleDelete(exam.id)} title="Supprimer">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
+                    {canEdit && (
+                      <td className="exams-actions-cell">
+                        <div className="exams-actions">
+                          <button className="exams-action-btn view" onClick={() => handleViewDetails(exam)} title="Voir détails">
+                            <Eye size={16} />
+                          </button>
+                          <button className="exams-action-btn edit" onClick={() => handleEdit(exam)} title="Modifier">
+                            <Edit size={16} />
+                          </button>
+                          <button className="exams-action-btn delete" onClick={() => handleDelete(exam.id)} title="Supprimer">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -412,13 +445,15 @@ const ExamsPage = () => {
                     <p>{selectedExam.room}</p>
                   </div>
                 </div>
-                <div className="detail-item">
-                  <GraduationCap size={16} />
-                  <div>
-                    <label>Surveillant</label>
-                    <p>{selectedExam.supervisor}</p>
+                {canSeeSupervisor && (
+                  <div className="detail-item">
+                    <GraduationCap size={16} />
+                    <div>
+                      <label>Surveillant</label>
+                      <p>{selectedExam.supervisor}</p>
+                    </div>
                   </div>
-                </div>
+                )}
                 <div className="detail-item">
                   <Award size={16} />
                   <div>
@@ -451,10 +486,12 @@ const ExamsPage = () => {
             </div>
             <div className="exams-modal-footer">
               <button className="btn-secondary" onClick={() => setShowDetails(false)}>Fermer</button>
-              <button className="btn-primary" onClick={() => {
-                setShowDetails(false);
-                handleEdit(selectedExam);
-              }}>Modifier</button>
+              {canEdit && (
+                <button className="btn-primary" onClick={() => {
+                  setShowDetails(false);
+                  handleEdit(selectedExam);
+                }}>Modifier</button>
+              )}
             </div>
           </div>
         </div>
