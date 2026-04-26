@@ -1,5 +1,4 @@
-// src/pages/EliminationPage.jsx
-import React, { useState, useContext, useMemo } from 'react';
+import React, { useState, useContext, useMemo, useEffect } from 'react';
 import { 
   AlertTriangle, 
   Plus, 
@@ -16,7 +15,9 @@ import {
   XCircle,
   Clock,
   TrendingDown,
-  AlertCircle
+  AlertCircle,
+  ShieldCheck,
+  SendHorizontal
 } from 'lucide-react';
 import { AppContext } from '../context/AppContext';
 import { useElimination } from '../context/EliminationContext';
@@ -30,6 +31,7 @@ const EliminationPage = () => {
     addElimination, 
     deleteElimination,
     updateElimination,
+    publishElimination,
     getDisqualifiedStudents,
     getAtRiskStudents,
     getAllEliminations
@@ -39,10 +41,11 @@ const EliminationPage = () => {
   const [editingElimination, setEditingElimination] = useState(null);
   const [selectedExam, setSelectedExam] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [formData, setFormData] = useState({
     examId: '',
     studentId: '',
-    grade: '',
+    presenceRate: '',
     teacherNote: ''
   });
 
@@ -54,8 +57,24 @@ const EliminationPage = () => {
   // Get students list
   const students = users?.filter(u => u.role === 'Student') || [];
   
-  // Get teacher's exams
-  const teacherExams = isTeacher ? exams?.filter(e => e.supervisor === user?.name) : exams;
+  // Get teacher's assigned exam IDs from assignments
+  const teacherAssignedExamIds = useMemo(() => {
+    if (!isTeacher || !assignments) return new Set();
+    return new Set(
+      assignments
+        .filter(a => String(a.supervisorId) === String(user?.id))
+        .map(a => String(a.examId))
+    );
+  }, [assignments, isTeacher, user]);
+
+  // Get teacher's exams (assigned + created)
+  const teacherExams = useMemo(() => {
+    if (!isTeacher || !exams) return [];
+    return exams.filter(e => 
+      teacherAssignedExamIds.has(String(e.id)) || 
+      String(e.createdBy) === String(user?.id)
+    );
+  }, [exams, isTeacher, teacherAssignedExamIds, user]);
 
   const disqualified = getDisqualifiedStudents();
   const atRisk = getAtRiskStudents();
@@ -66,36 +85,29 @@ const EliminationPage = () => {
     return elim.status === filterStatus;
   });
 
-  // Teacher can only see eliminations for students in their assigned class(es)
-  const teacherClassNames = useMemo(() => {
-    if (!isTeacher || !assignments || !exams) return new Set();
-    const assignedExamIds = assignments
-      .filter(a => a.supervisorId === user?.id)
-      .map(a => a.examId);
-    const classNames = exams
-      .filter(e => assignedExamIds.includes(e.id))
-      .map(e => e.className);
-    return new Set(classNames);
-  }, [assignments, exams, isTeacher, user]);
-
+  // Teacher can only see eliminations for their assigned exams
   const visibleEliminations = useMemo(() => {
     if (isAdmin) return filteredEliminations;
     if (isTeacher) {
-      return filteredEliminations.filter(elim => {
-        const student = users.find(u => u.id === elim.studentId);
-        return student && teacherClassNames.has(student.className);
-      });
+      return filteredEliminations.filter(elim => 
+        teacherAssignedExamIds.has(String(elim.examId))
+      );
     }
-    return filteredEliminations;
-  }, [filteredEliminations, isAdmin, isTeacher, teacherClassNames, users]);
+    // Students only see published eliminations
+    return filteredEliminations.filter(elim => elim.published === true);
+  }, [filteredEliminations, isAdmin, isTeacher, teacherAssignedExamIds]);
 
   // Stats computed from visible eliminations
   const visibleDisqualified = visibleEliminations.filter(e => e.status === 'disqualified');
   const visibleAtRisk = visibleEliminations.filter(e => e.status === 'at_risk');
+  const visibleSafe = visibleEliminations.filter(e => e.status === 'safe');
 
   const getStatusIcon = (status) => {
     if (status === 'disqualified') {
       return <XCircle size={16} />;
+    }
+    if (status === 'safe') {
+      return <ShieldCheck size={16} />;
     }
     return <AlertCircle size={16} />;
   };
@@ -104,6 +116,9 @@ const EliminationPage = () => {
     if (status === 'disqualified') {
       return 'status-disqualified';
     }
+    if (status === 'safe') {
+      return 'status-safe';
+    }
     return 'status-at-risk';
   };
 
@@ -111,21 +126,62 @@ const EliminationPage = () => {
     if (status === 'disqualified') {
       return 'Éliminé';
     }
+    if (status === 'safe') {
+      return 'Sécurisé';
+    }
     return 'À risque';
   };
 
-  const getGradeColor = (grade) => {
-    if (grade <= 33.33) return '#EF4444';
-    if (grade <= 66.66) return '#F59E0B';
+  const getPresenceColor = (rate) => {
+    if (rate <= 33.33) return '#EF4444';
+    if (rate <= 66.66) return '#F59E0B';
     return '#10B981';
   };
+
+  // Calculate presence rate for a student in a course (all exams with same subject + class)
+  const calculatePresenceRate = (examId, studentId) => {
+    if (!examId || !studentId || !exams) return null;
+    
+    const selectedExam = exams.find(e => String(e.id) === String(examId));
+    if (!selectedExam) return null;
+    
+    // Find all exams with same subject and same className
+    const relatedExams = exams.filter(e => 
+      e.subject === selectedExam.subject && 
+      e.className === selectedExam.className
+    );
+    
+    if (relatedExams.length === 0) return null;
+    
+    let presentCount = 0;
+    relatedExams.forEach(exam => {
+      const attendance = exam.attendance || [];
+      const studentAttendance = attendance.find(a => String(a.studentId) === String(studentId));
+      if (studentAttendance && studentAttendance.present) {
+        presentCount++;
+      }
+    });
+    
+    const rate = (presentCount / relatedExams.length) * 100;
+    return Math.round(rate * 100) / 100;
+  };
+
+  // Auto-calculate presence rate when exam or student changes
+  useEffect(() => {
+    if (formData.examId && formData.studentId && !editingElimination) {
+      const rate = calculatePresenceRate(formData.examId, formData.studentId);
+      if (rate !== null) {
+        setFormData(prev => ({ ...prev, presenceRate: rate.toString() }));
+      }
+    }
+  }, [formData.examId, formData.studentId, editingElimination]);
 
   const handleAdd = () => {
     setEditingElimination(null);
     setFormData({
       examId: '',
       studentId: '',
-      grade: '',
+      presenceRate: '',
       teacherNote: ''
     });
     setShowModal(true);
@@ -136,64 +192,61 @@ const EliminationPage = () => {
     setFormData({
       examId: elimination.examId,
       studentId: elimination.studentId,
-      grade: elimination.grade,
+      presenceRate: elimination.presenceRate !== undefined ? elimination.presenceRate : (elimination.grade || ''),
       teacherNote: elimination.teacherNote || ''
     });
     setShowModal(true);
   };
 
-  const handleSubmit = async () => {
-    if (!formData.examId || !formData.studentId || !formData.grade) {
+  const handleSubmit = async (publish = false) => {
+    if (!formData.examId || !formData.studentId || !formData.presenceRate) {
       toast.error('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
-    const grade = parseFloat(formData.grade);
-    const exam = exams?.find(e => e.id === parseInt(formData.examId));
-    const student = students?.find(s => s.id === parseInt(formData.studentId));
+    const presenceRate = parseFloat(formData.presenceRate);
+    const exam = exams?.find(e => String(e.id) === String(formData.examId));
+    const student = students?.find(s => String(s.id) === String(formData.studentId));
 
     if (editingElimination) {
       await updateElimination(editingElimination.id, {
         ...formData,
-        grade: grade,
-        status: grade <= 33.33 ? 'disqualified' : 'at_risk',
-        reason: grade <= 33.33 
-          ? 'Note inférieure au seuil d\'élimination (0-33.33%)' 
-          : 'Note dans la zone à risque (33.34-66.66%)',
-        message: grade <= 33.33 
-          ? `Note: ${grade}% - Élimination définitive de l'examen`
-          : `Note: ${grade}% - Risque d'élimination. Une session de rattrapage est recommandée.`
+        presenceRate: presenceRate,
+        grade: presenceRate,
+        examId: formData.examId,
+        studentId: formData.studentId,
+        published: publish ? true : editingElimination.published
       });
     } else {
       await addElimination({
-        examId: parseInt(formData.examId),
+        examId: formData.examId,
         examName: exam?.subject || '',
-        studentId: parseInt(formData.studentId),
+        studentId: formData.studentId,
         studentName: student?.name || '',
-        grade: grade,
-        status: grade <= 33.33 ? 'disqualified' : 'at_risk',
-        reason: grade <= 33.33 
-          ? 'Note inférieure au seuil d\'élimination (0-33.33%)' 
-          : 'Note dans la zone à risque (33.34-66.66%)',
-        message: grade <= 33.33 
-          ? `Note: ${grade}% - Élimination définitive de l'examen`
-          : `Note: ${grade}% - Risque d'élimination. Une session de rattrapage est recommandée.`,
+        presenceRate: presenceRate,
+        grade: presenceRate,
         teacherNote: formData.teacherNote,
-        publishedBy: user?.name || user?.role
+        publishedBy: user?.name || user?.role,
+        published: publish
       });
     }
     setShowModal(false);
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette élimination ?')) {
-      await deleteElimination(id);
-    }
+    await deleteElimination(id);
+    setDeleteConfirmId(null);
+  };
+
+  const handlePublish = async (id) => {
+    await publishElimination(id);
   };
 
   // Student view
   if (isStudent) {
-    const myEliminations = allEliminations.filter(e => e.studentId === user?.id);
+    const myEliminations = allEliminations.filter(e => 
+      e.studentId === user?.id && e.published === true
+    );
     
     return (
       <div className="elim-page">
@@ -204,7 +257,7 @@ const EliminationPage = () => {
             </div>
             <div>
               <h1>Mes Éliminations</h1>
-              <p>Consultez votre statut par examen</p>
+              <p>Consultez votre statut par module</p>
             </div>
           </div>
         </div>
@@ -229,20 +282,29 @@ const EliminationPage = () => {
               <span className="elim-stat-label">À risque 🟡</span>
             </div>
           </div>
+          <div className="elim-stat-card">
+            <div className="elim-stat-icon safe">
+              <ShieldCheck size={20} />
+            </div>
+            <div className="elim-stat-info">
+              <span className="elim-stat-value">{myEliminations.filter(e => e.status === 'safe').length}</span>
+              <span className="elim-stat-label">Sécurisé 🟢</span>
+            </div>
+          </div>
         </div>
 
         {myEliminations.length > 0 ? (
           <div className="elim-table-wrapper">
             <div className="elim-table-header">
-              <h3>Résultats par examen</h3>
+              <h3>Résultats par module</h3>
               <span className="elim-count">{myEliminations.length} résultat(s)</span>
             </div>
             <div className="elim-table-container">
               <table className="elim-table">
                 <thead>
                   <tr>
-                    <th>Examen</th>
-                    <th>Note</th>
+                    <th>Module</th>
+                    <th>Taux de présence</th>
                     <th>Statut</th>
                     <th>Message</th>
                     <th>Date</th>
@@ -253,8 +315,8 @@ const EliminationPage = () => {
                     <tr key={elim.id} className={`elim-row ${elim.status}`}>
                       <td className="exam-name">{elim.examName}</td>
                       <td>
-                        <span className="grade-badge" style={{ backgroundColor: getGradeColor(elim.grade), color: 'white' }}>
-                          {elim.grade}%
+                        <span className="grade-badge" style={{ backgroundColor: getPresenceColor(elim.presenceRate !== undefined ? elim.presenceRate : elim.grade), color: 'white' }}>
+                          {elim.presenceRate !== undefined ? elim.presenceRate : elim.grade}%
                         </span>
                       </td>
                       <td>
@@ -276,8 +338,8 @@ const EliminationPage = () => {
             <div className="elim-empty-icon">
               <CheckCircle size={48} />
             </div>
-            <h4>Aucune élimination</h4>
-            <p>Vous n'avez été éliminé d'aucun examen pour le moment.</p>
+            <h4>Aucune élimination publiée</h4>
+            <p>Vous n'avez été éliminé d'aucun module pour le moment.</p>
           </div>
         )}
       </div>
@@ -294,14 +356,28 @@ const EliminationPage = () => {
           </div>
           <div>
             <h1>Gestion des Éliminations</h1>
-            <p>Gérez les éliminations selon les notes (🔴 0-33.33% | 🟡 33.34-66.66%)</p>
+            <p>Gérez les éliminations selon le taux de présence (🔴 0-33.33% | 🟡 33.34-66.66% | 🟢 66.67-100%)</p>
           </div>
         </div>
         {isAdmin && (
-          <button className="elim-add-btn" onClick={handleAdd}>
-            <Plus size={18} />
-            Nouvelle élimination
-          </button>
+          <div className="elim-hero-actions">
+            <button className="elim-add-btn" onClick={handleAdd}>
+              <Plus size={18} />
+              Nouvelle élimination
+            </button>
+            {visibleEliminations.some(e => !e.published) && (
+              <button className="elim-publish-all-btn" onClick={async () => {
+                const drafts = visibleEliminations.filter(e => !e.published);
+                for (const d of drafts) {
+                  await publishElimination(d.id);
+                }
+                toast.success(`${drafts.length} élimination(s) publiée(s)`);
+              }}>
+                <SendHorizontal size={18} />
+                Publier tout
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -334,6 +410,15 @@ const EliminationPage = () => {
             <span className="elim-stat-label">À risque 🟡</span>
           </div>
         </div>
+        <div className="elim-stat-card">
+          <div className="elim-stat-icon safe">
+            <ShieldCheck size={20} />
+          </div>
+          <div className="elim-stat-info">
+            <span className="elim-stat-value">{visibleSafe.length}</span>
+            <span className="elim-stat-label">Sécurisé 🟢</span>
+          </div>
+        </div>
       </div>
 
       {/* Filter */}
@@ -344,6 +429,7 @@ const EliminationPage = () => {
             <option value="all">Tous</option>
             <option value="disqualified">Éliminés 🔴</option>
             <option value="at_risk">À risque 🟡</option>
+            <option value="safe">Sécurisé 🟢</option>
           </select>
         </div>
       </div>
@@ -358,13 +444,13 @@ const EliminationPage = () => {
           <table className="elim-table">
             <thead>
               <tr>
-                <th>Examen</th>
+                <th>Module</th>
                 <th>Étudiant</th>
-                <th>Note</th>
+                <th>Taux de présence</th>
                 <th>Statut</th>
-                <th>Motif</th>
                 <th>Date</th>
                 <th>Publié par</th>
+                <th>État</th>
                 {isAdmin && <th>Actions</th>}
               </tr>
             </thead>
@@ -374,8 +460,8 @@ const EliminationPage = () => {
                   <td className="exam-name">{elim.examName}</td>
                   <td>{elim.studentName}</td>
                   <td>
-                    <span className="grade-badge" style={{ backgroundColor: getGradeColor(elim.grade), color: 'white' }}>
-                      {elim.grade}%
+                    <span className="grade-badge" style={{ backgroundColor: getPresenceColor(elim.presenceRate !== undefined ? elim.presenceRate : elim.grade), color: 'white' }}>
+                      {elim.presenceRate !== undefined ? elim.presenceRate : elim.grade}%
                     </span>
                   </td>
                   <td>
@@ -384,18 +470,38 @@ const EliminationPage = () => {
                       {getStatusLabel(elim.status)}
                     </span>
                   </td>
-                  <td className="reason-cell">{elim.reason}</td>
                   <td>{elim.date}</td>
                   <td>{elim.publishedBy}</td>
+                  <td>
+                    <span className={`publish-badge ${elim.published ? 'published' : 'draft'}`}>
+                      {elim.published ? 'Publié' : 'Brouillon'}
+                    </span>
+                  </td>
                   {isAdmin && (
                     <td className="actions-cell">
                       <div className="elim-actions">
-                        <button className="elim-action-btn edit" onClick={() => handleEdit(elim)}>
+                        {!elim.published && (
+                          <button className="elim-action-btn publish" onClick={() => handlePublish(elim.id)} title="Publier">
+                            <SendHorizontal size={16} />
+                          </button>
+                        )}
+                        <button className="elim-action-btn edit" onClick={() => handleEdit(elim)} title="Modifier">
                           <Edit size={16} />
                         </button>
-                        <button className="elim-action-btn delete" onClick={() => handleDelete(elim.id)}>
-                          <Trash2 size={16} />
-                        </button>
+                        {deleteConfirmId === elim.id ? (
+                          <div className="delete-confirm">
+                            <button className="elim-action-btn confirm-yes" onClick={() => handleDelete(elim.id)} title="Confirmer">
+                              <CheckCircle size={16} />
+                            </button>
+                            <button className="elim-action-btn confirm-no" onClick={() => setDeleteConfirmId(null)} title="Annuler">
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <button className="elim-action-btn delete" onClick={() => setDeleteConfirmId(elim.id)} title="Supprimer">
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   )}
@@ -418,14 +524,14 @@ const EliminationPage = () => {
             </div>
             <div className="elim-modal-body">
               <div className="elim-form-group">
-                <label>Examen *</label>
+                <label>Module (Examen) *</label>
                 <select 
                   value={formData.examId}
                   onChange={(e) => setFormData({...formData, examId: e.target.value})}
                 >
-                  <option value="">Sélectionner un examen</option>
+                  <option value="">Sélectionner un module</option>
                   {(isAdmin ? exams : teacherExams)?.map(exam => (
-                    <option key={exam.id} value={exam.id}>{exam.subject}</option>
+                    <option key={exam.id} value={exam.id}>{exam.subject} ({exam.className})</option>
                   ))}
                 </select>
               </div>
@@ -437,23 +543,23 @@ const EliminationPage = () => {
                 >
                   <option value="">Sélectionner un étudiant</option>
                   {students.map(student => (
-                    <option key={student.id} value={student.id}>{student.name}</option>
+                    <option key={student.id} value={student.id}>{student.name} ({student.className})</option>
                   ))}
                 </select>
               </div>
               <div className="elim-form-group">
-                <label>Note (%) *</label>
+                <label>Taux de présence (%) *</label>
                 <input 
                   type="number" 
                   step="0.01"
                   min="0"
                   max="100"
-                  value={formData.grade}
-                  onChange={(e) => setFormData({...formData, grade: e.target.value})}
-                  placeholder="Entrez la note de l'étudiant"
+                  value={formData.presenceRate}
+                  onChange={(e) => setFormData({...formData, presenceRate: e.target.value})}
+                  placeholder="Sélectionnez un module et un étudiant pour calculer automatiquement"
                 />
                 <small className="form-hint">
-                  🔴 0-33.33% = Élimination | 🟡 33.34-66.66% = Risque d'élimination
+                  🔴 0-33.33% = Élimination | 🟡 33.34-66.66% = Risque d'élimination | 🟢 66.67-100% = Sécurisé
                 </small>
               </div>
               <div className="elim-form-group">
@@ -468,8 +574,15 @@ const EliminationPage = () => {
             </div>
             <div className="elim-modal-footer">
               <button className="btn-secondary" onClick={() => setShowModal(false)}>Annuler</button>
-              <button className="btn-primary" onClick={handleSubmit}>
-                {editingElimination ? 'Modifier' : 'Ajouter'}
+              {!editingElimination && (
+                <button className="btn-primary btn-draft" onClick={() => handleSubmit(false)}>
+                  <Plus size={16} />
+                  Ajouter
+                </button>
+              )}
+              <button className="btn-primary btn-publish" onClick={() => handleSubmit(true)}>
+                <SendHorizontal size={16} />
+                {editingElimination ? 'Publier les modifications' : 'Publier'}
               </button>
             </div>
           </div>
@@ -480,3 +593,4 @@ const EliminationPage = () => {
 };
 
 export default EliminationPage;
+
