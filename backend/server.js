@@ -10,6 +10,7 @@ const Exam = require('./models/Exam');
 const Room = require('./models/Room');
 const Assignment = require('./models/Assignment');
 const Grade = require('./models/Grade');
+const Elimination = require('./models/Elimination');
 
 const app = express();
 app.use(express.json());
@@ -589,6 +590,119 @@ app.delete('/api/grades/:id', async (req, res) => {
 
     await Grade.findByIdAndDelete(req.params.id);
     res.json({ message: 'Note supprimée' });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// ELIMINATIONS
+app.get('/api/eliminations', async (req, res) => {
+  try {
+    const { role, id } = req.user;
+
+    if (role === 'Admin') {
+      const eliminations = await Elimination.find().sort({ createdAt: -1 });
+      return res.json(eliminations);
+    }
+
+    if (role === 'Teacher') {
+      const assignedExamIds = await Assignment.distinct('examId', { supervisorId: id });
+      const eliminations = await Elimination.find({
+        examId: { $in: assignedExamIds },
+        published: true
+      }).sort({ createdAt: -1 });
+      return res.json(eliminations);
+    }
+
+    if (role === 'Student') {
+      const eliminations = await Elimination.find({
+        studentId: id,
+        published: true
+      }).sort({ createdAt: -1 });
+      return res.json(eliminations);
+    }
+
+    res.json([]);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+app.post('/api/eliminations/calculate', async (req, res) => {
+  try {
+    if (req.user?.role !== 'Admin') {
+      return res.status(403).json({ message: 'Accès refusé. Seul l\'admin peut calculer les éliminations.' });
+    }
+
+    const exams = await Exam.find();
+    const calculated = [];
+
+    for (const exam of exams) {
+      if (!exam.attendance || exam.attendance.length === 0) continue;
+
+      const totalSessions = exam.attendance.length;
+      const students = await User.find({ role: 'Student', className: exam.className });
+
+      for (const student of students) {
+        const studentAttendance = exam.attendance.filter(a => String(a.studentId) === String(student._id));
+        const absentCount = studentAttendance.filter(a => !a.present).length;
+        const absenceRate = totalSessions > 0 ? (absentCount / totalSessions) * 100 : 0;
+
+        let status = null;
+        if (absenceRate >= 66.67) status = 'at_risk';
+        else if (absenceRate >= 33.34) status = 'eliminated';
+
+        if (status) {
+          const exists = await Elimination.findOne({ examId: exam._id, studentId: student._id });
+          if (!exists) {
+            const elimination = new Elimination({
+              examId: exam._id,
+              examName: exam.subject,
+              studentId: student._id,
+              studentName: student.name,
+              className: student.className,
+              absenceRate: Math.round(absenceRate * 100) / 100,
+              status,
+              published: false
+            });
+            await elimination.save();
+            calculated.push(elimination);
+          }
+        }
+      }
+    }
+
+    res.json({ message: `${calculated.length} éliminations calculées`, calculated });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+app.post('/api/eliminations/publish', async (req, res) => {
+  try {
+    if (req.user?.role !== 'Admin') {
+      return res.status(403).json({ message: 'Accès refusé. Seul l\'admin peut publier les éliminations.' });
+    }
+
+    const result = await Elimination.updateMany(
+      { published: false },
+      { published: true, publishedBy: req.user?.name || 'Admin', publishedAt: new Date() }
+    );
+
+    res.json({ message: `${result.modifiedCount} éliminations publiées` });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+app.delete('/api/eliminations/:id', async (req, res) => {
+  try {
+    if (req.user?.role !== 'Admin') {
+      return res.status(403).json({ message: 'Accès refusé' });
+    }
+
+    await Elimination.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Élimination supprimée' });
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur' });
   }

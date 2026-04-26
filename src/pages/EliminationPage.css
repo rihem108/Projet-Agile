@@ -561,6 +561,177 @@
   }
 }
 
+/* Admin Action Buttons */
+.elim-admin-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.elim-calculate-btn,
+.elim-publish-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.elim-calculate-btn {
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
+  color: white;
+}
+
+.elim-calculate-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.elim-publish-btn {
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: white;
+}
+
+.elim-publish-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.elim-calculate-btn:disabled,
+.elim-publish-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Absence Rate Bar */
+.absence-rate-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 140px;
+}
+
+.absence-bar-bg {
+  flex: 1;
+  height: 8px;
+  background: #E2E8F0;
+  border-radius: 4px;
+  overflow: hidden;
+  min-width: 60px;
+}
+
+.dark-mode .absence-bar-bg {
+  background: #334155;
+}
+
+.absence-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.absence-rate-value {
+  font-size: 13px;
+  font-weight: 700;
+  min-width: 45px;
+  text-align: right;
+}
+
+/* Published / Unpublished Badges */
+.published-badge,
+.unpublished-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.published-badge {
+  background: #D1FAE5;
+  color: #059669;
+}
+
+.unpublished-badge {
+  background: #FEF3C7;
+  color: #D97706;
+}
+
+.dark-mode .published-badge {
+  background: rgba(5, 150, 105, 0.2);
+  color: #34D399;
+}
+
+.dark-mode .unpublished-badge {
+  background: rgba(217, 119, 6, 0.2);
+  color: #FBBF24;
+}
+
+.not-published {
+  color: #94A3B8;
+  font-style: italic;
+}
+
+/* Unpublished Row */
+.elim-row.unpublished {
+  opacity: 0.7;
+}
+
+.elim-row.unpublished td {
+  background: rgba(251, 191, 36, 0.03);
+}
+
+.dark-mode .elim-row.unpublished td {
+  background: rgba(251, 191, 36, 0.05);
+}
+
+/* Delete Confirm State */
+.elim-action-btn.delete.confirm {
+  background: #EF4444;
+  color: white;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* Status eliminated (updated from disqualified) */
+.elim-status.status-eliminated {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+.dark-mode .elim-status.status-eliminated {
+  background: rgba(220, 38, 38, 0.2);
+}
+
+.elim-stat-icon.eliminated {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+.dark-mode .elim-stat-icon.eliminated {
+  background: rgba(220, 38, 38, 0.2);
+}
+
+/* Spin Icon */
+.spin-icon {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .elim-hero {
@@ -571,6 +742,11 @@
   .elim-hero-content {
     flex-direction: column;
     text-align: center;
+  }
+  
+  .elim-admin-actions {
+    width: 100%;
+    justify-content: center;
   }
   
   .elim-table-header {
@@ -634,4 +810,9 @@
   .reason-cell {
     max-width: 150px;
   }
+  
+  .absence-rate-cell {
+    min-width: 100px;
+  }
 }
+
