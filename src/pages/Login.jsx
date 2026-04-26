@@ -20,7 +20,12 @@ import {
   CheckCircle,
   MapPin,
   Phone,
-  Building2
+  Building2,
+  X,
+  KeyRound,
+  ShieldCheck,
+  Send,
+  RotateCcw
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -34,6 +39,15 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState('Student');
+
+  // Forgot password modal state
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotStep, setForgotStep] = useState(1);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotCode, setForgotCode] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   if (isAuthenticated && user) {
     return <Navigate to="/" />;
@@ -53,10 +67,27 @@ const Login = () => {
     setLoading(false);
   };
 
-  const handleForgotPassword = async () => {
-    const normalizedEmail = email.trim();
+  const openForgotModal = () => {
+    setForgotEmail(email.trim());
+    setForgotStep(1);
+    setForgotCode('');
+    setForgotNewPassword('');
+    setShowForgotPassword(false);
+    setShowForgotModal(true);
+  };
+
+  const closeForgotModal = () => {
+    setShowForgotModal(false);
+    setForgotStep(1);
+    setForgotCode('');
+    setForgotNewPassword('');
+    setForgotLoading(false);
+  };
+
+  const handleRequestCode = async () => {
+    const normalizedEmail = forgotEmail.trim();
     if (!normalizedEmail) {
-      toast.error('Entrez votre email puis réessayez.');
+      toast.error('Veuillez saisir votre adresse email.');
       return;
     }
 
@@ -66,35 +97,57 @@ const Login = () => {
       return;
     }
 
+    setForgotLoading(true);
     try {
       const response = await api.postPublic('/auth/forgot-password', { email: normalizedEmail });
 
       if (response?.code) {
-        window.alert(`Votre code de vérification est : ${response.code}\n(Ce code est valable 15 minutes)`);
+        toast.success(`Code envoyé : ${response.code} (valable 15 min)`);
+      } else {
+        toast.success('Code de vérification envoyé !');
       }
+      setForgotStep(2);
+    } catch (err) {
+      toast.error(err.message || 'Impossible d\'envoyer le code');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
 
-      const code = window.prompt('Entrez le code reçu :');
-      if (!code) {
-        toast.error('Réinitialisation annulée.');
-        return;
-      }
+  const handleResetPassword = async () => {
+    const normalizedEmail = forgotEmail.trim();
+    const code = forgotCode.trim();
+    const newPassword = forgotNewPassword.trim();
 
-      const newPassword = window.prompt('Entrez votre nouveau mot de passe (min 6 caractères) :');
-      if (!newPassword) {
-        toast.error('Réinitialisation annulée.');
-        return;
-      }
+    if (!code) {
+      toast.error('Veuillez saisir le code de vérification.');
+      return;
+    }
 
+    if (!newPassword) {
+      toast.error('Veuillez saisir un nouveau mot de passe.');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error('Le mot de passe doit contenir au moins 6 caractères.');
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
       await api.postPublic('/auth/reset-password', {
         email: normalizedEmail,
-        code: code.trim(),
-        newPassword: newPassword.trim()
+        code: code,
+        newPassword: newPassword
       });
 
       setPassword('');
-      toast.success('Mot de passe réinitialisé. Vous pouvez vous connecter.');
+      setForgotStep(3);
     } catch (err) {
       toast.error(err.message || 'Impossible de réinitialiser le mot de passe');
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -308,7 +361,7 @@ const Login = () => {
                   <input type="checkbox" />
                   <span>Se souvenir de moi</span>
                 </label>
-                <button type="button" className="forgot-link-glass" onClick={handleForgotPassword}>
+                <button type="button" className="forgot-link-glass" onClick={openForgotModal}>
                   Mot de passe oublié ?
                 </button>
               </div>
@@ -346,8 +399,195 @@ const Login = () => {
           </div>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <div className="forgot-password-overlay" onClick={closeForgotModal}>
+          <div className="forgot-password-modal" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="forgot-password-header">
+              <div className="forgot-password-title">
+                <div className="forgot-password-icon">
+                  {forgotStep === 3 ? <ShieldCheck size={22} /> : <KeyRound size={22} />}
+                </div>
+                <div>
+                  <h3>
+                    {forgotStep === 1 && 'Mot de passe oublié'}
+                    {forgotStep === 2 && 'Réinitialisation'}
+                    {forgotStep === 3 && 'Succès !'}
+                  </h3>
+                  <p>
+                    {forgotStep === 1 && 'Entrez votre email pour recevoir un code'}
+                    {forgotStep === 2 && 'Saisissez le code et votre nouveau mot de passe'}
+                    {forgotStep === 3 && 'Votre mot de passe a été réinitialisé'}
+                  </p>
+                </div>
+              </div>
+              <button className="forgot-password-close" onClick={closeForgotModal}>
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Step Indicator */}
+            <div className="forgot-password-steps">
+              <div className={`step-dot ${forgotStep >= 1 ? 'active' : ''}`}>
+                <Mail size={14} />
+              </div>
+              <div className={`step-line ${forgotStep >= 2 ? 'active' : ''}`}></div>
+              <div className={`step-dot ${forgotStep >= 2 ? 'active' : ''}`}>
+                <KeyRound size={14} />
+              </div>
+              <div className={`step-line ${forgotStep >= 3 ? 'active' : ''}`}></div>
+              <div className={`step-dot ${forgotStep >= 3 ? 'active' : ''}`}>
+                <CheckCircle size={14} />
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="forgot-password-body">
+              {forgotStep === 1 && (
+                <div className="forgot-password-step">
+                  <div className="input-group-glass">
+                    <div className="input-icon-glass">
+                      <Mail size={18} />
+                    </div>
+                    <input
+                      type="email"
+                      placeholder="Adresse email"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      autoComplete="email"
+                      className="input-field-glass"
+                      onKeyDown={(e) => e.key === 'Enter' && handleRequestCode()}
+                    />
+                    <div className="input-focus-bg"></div>
+                  </div>
+                </div>
+              )}
+
+              {forgotStep === 2 && (
+                <div className="forgot-password-step">
+                  <div className="input-group-glass">
+                    <div className="input-icon-glass">
+                      <Shield size={18} />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Code de vérification"
+                      value={forgotCode}
+                      onChange={(e) => setForgotCode(e.target.value)}
+                      className="input-field-glass"
+                      onKeyDown={(e) => e.key === 'Enter' && handleResetPassword()}
+                    />
+                    <div className="input-focus-bg"></div>
+                  </div>
+
+                  <div className="input-group-glass">
+                    <div className="input-icon-glass">
+                      <Lock size={18} />
+                    </div>
+                    <input
+                      type={showForgotPassword ? 'text' : 'password'}
+                      placeholder="Nouveau mot de passe (min 6 caractères)"
+                      value={forgotNewPassword}
+                      onChange={(e) => setForgotNewPassword(e.target.value)}
+                      autoComplete="new-password"
+                      className="input-field-glass"
+                      onKeyDown={(e) => e.key === 'Enter' && handleResetPassword()}
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle-glass"
+                      onClick={() => setShowForgotPassword(!showForgotPassword)}
+                    >
+                      {showForgotPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                    <div className="input-focus-bg"></div>
+                  </div>
+                </div>
+              )}
+
+              {forgotStep === 3 && (
+                <div className="forgot-password-step forgot-password-success">
+                  <div className="success-icon-glass">
+                    <ShieldCheck size={48} />
+                  </div>
+                  <p className="success-message">
+                    Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="forgot-password-footer">
+              {forgotStep === 1 && (
+                <>
+                  <button className="forgot-password-btn forgot-password-btn-secondary" onClick={closeForgotModal}>
+                    Annuler
+                  </button>
+                  <button 
+                    className="forgot-password-btn forgot-password-btn-primary" 
+                    onClick={handleRequestCode}
+                    disabled={forgotLoading}
+                  >
+                    {forgotLoading ? (
+                      <div className="btn-loader">
+                        <div className="loader-spinner"></div>
+                        <span>Envoi...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <span>Envoyer le code</span>
+                        <Send size={16} />
+                      </>
+                    )}
+                  </button>
+                </>
+              )}
+
+              {forgotStep === 2 && (
+                <>
+                  <button 
+                    className="forgot-password-btn forgot-password-btn-secondary" 
+                    onClick={() => setForgotStep(1)}
+                  >
+                    <RotateCcw size={16} />
+                    <span>Retour</span>
+                  </button>
+                  <button 
+                    className="forgot-password-btn forgot-password-btn-primary" 
+                    onClick={handleResetPassword}
+                    disabled={forgotLoading}
+                  >
+                    {forgotLoading ? (
+                      <div className="btn-loader">
+                        <div className="loader-spinner"></div>
+                        <span>Réinitialisation...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <span>Réinitialiser</span>
+                        <ArrowRight size={16} />
+                      </>
+                    )}
+                  </button>
+                </>
+              )}
+
+              {forgotStep === 3 && (
+                <button className="forgot-password-btn forgot-password-btn-primary" onClick={closeForgotModal}>
+                  <span>Se connecter</span>
+                  <ArrowRight size={16} />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default Login;
+

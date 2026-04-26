@@ -77,3 +77,75 @@
 .dark-mode .demo-btn {
   color: var(--text-white);
 }
+
+/* ==================== FORGOT PASSWORD MODAL DARK MODE ==================== */
+.dark-mode .forgot-password-overlay {
+  background: rgba(15, 23, 42, 0.85);
+}
+
+.dark-mode .forgot-password-modal {
+  background: rgba(15, 23, 42, 0.95);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.dark-mode .forgot-password-icon {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15));
+  color: #93C5FD;
+}
+
+.dark-mode .forgot-password-title h3 {
+  color: var(--text-white);
+}
+
+.dark-mode .forgot-password-title p {
+  color: #94A3B8;
+}
+
+.dark-mode .forgot-password-close {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.06);
+  color: #64748B;
+}
+
+.dark-mode .forgot-password-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-white);
+}
+
+.dark-mode .step-dot {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #475569;
+}
+
+.dark-mode .step-dot.active {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+}
+
+.dark-mode .step-line {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.dark-mode .success-icon-glass {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
+  color: #6EE7B7;
+  border-color: rgba(16, 185, 129, 0.15);
+}
+
+.dark-mode .success-message {
+  color: #94A3B8;
+}
+
+.dark-mode .forgot-password-btn-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  color: #64748B;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark-mode .forgot-password-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-white);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
