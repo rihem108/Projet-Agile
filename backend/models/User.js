@@ -1,4 +1,4 @@
- const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -12,6 +12,11 @@ const UserSchema = new mongoose.Schema({
       return this.role === 'Student';
     }
   },
+  status: { type: String, enum: ['active', 'inactive'], default: 'active' },
+  phone: { type: String, default: '' },
+  address: { type: String, default: '' },
+  department: { type: String, default: '' },
+  joinDate: { type: String, default: '' },
   resetCode: { type: String, default: null },
   resetCodeExpires: { type: Date, default: null }
 }, { timestamps: true });

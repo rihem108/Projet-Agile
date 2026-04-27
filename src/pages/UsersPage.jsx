@@ -40,25 +40,21 @@ const UsersPage = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    password: '',
     role: 'Student',
     status: 'active',
     phone: '',
     address: '',
     department: '',
+    className: '',
     joinDate: new Date().toISOString().split('T')[0]
   });
+  const [submitting, setSubmitting] = useState(false);
 
-  // Mock users if empty
-  const [localUsers, setLocalUsers] = useState([
-    { id: 1, name: 'Dr. Mohamed Ben Ali', email: 'mohamed.benali@univ.tn', role: 'Admin', status: 'active', phone: '+216 98 123 456', address: 'Sousse, Tunisie', department: 'Administration', joinDate: '2020-09-01', avatar: 'MB', examsCount: 24, studentsCount: 450 },
-    { id: 2, name: 'Prof. Sarah Williams', email: 'sarah.williams@univ.tn', role: 'Teacher', status: 'active', phone: '+216 98 234 567', address: 'Monastir, Tunisie', department: 'Mathématiques', joinDate: '2019-09-01', avatar: 'SW', examsCount: 18, studentsCount: 120 },
-    { id: 3, name: 'M. Karim Ben Ali', email: 'karim.benali@univ.tn', role: 'Teacher', status: 'active', phone: '+216 98 345 678', address: 'Sfax, Tunisie', department: 'Informatique', joinDate: '2021-09-01', avatar: 'KB', examsCount: 15, studentsCount: 95 },
-    { id: 4, name: 'Ahmed Mansouri', email: 'ahmed.mansouri@univ.tn', role: 'Student', status: 'active', phone: '+216 98 456 789', address: 'Tunis, Tunisie', department: 'Informatique', joinDate: '2023-09-01', avatar: 'AM', examsCount: 0, studentsCount: 0 },
-    { id: 5, name: 'Leila Trabelsi', email: 'leila.trabelsi@univ.tn', role: 'Student', status: 'inactive', phone: '+216 98 567 890', address: 'Nabeul, Tunisie', department: 'Mathématiques', joinDate: '2022-09-01', avatar: 'LT', examsCount: 0, studentsCount: 0 },
-  ]);
+  const [localUsers, setLocalUsers] = useState([]);
 
   useEffect(() => {
-    if (users && users.length > 0) {
+    if (users) {
       setLocalUsers(users);
     }
   }, [users]);
@@ -85,11 +81,13 @@ const UsersPage = () => {
     setFormData({
       name: '',
       email: '',
+      password: '',
       role: 'Student',
       status: 'active',
       phone: '',
       address: '',
       department: '',
+      className: '',
       joinDate: new Date().toISOString().split('T')[0]
     });
     setShowModal(true);
@@ -110,10 +108,14 @@ const UsersPage = () => {
     setShowModal(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
-      setLocalUsers(localUsers.filter(u => u.id !== id));
-      toast.success('Utilisateur supprimé avec succès');
+      const deleted = await deleteUser(id);
+      if (deleted) {
+        setLocalUsers(localUsers.filter(u => u.id !== id));
+      } else {
+        toast.error('Erreur lors de la suppression');
+      }
     }
   };
 
@@ -122,31 +124,62 @@ const UsersPage = () => {
     setShowDetails(true);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.name || !formData.email) {
       toast.error('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
+    setSubmitting(true);
+
     if (editingUser) {
-      setLocalUsers(localUsers.map(u => 
-        u.id === editingUser.id 
-          ? { ...u, ...formData }
-          : u
-      ));
-      toast.success('Utilisateur modifié avec succès');
+      // Build update payload (exclude empty password to avoid overwriting)
+      const updatePayload = { ...formData };
+      if (!updatePayload.password) delete updatePayload.password;
+      delete updatePayload.className; // className not editable here
+
+      const updated = await updateUser(editingUser.id, updatePayload);
+      if (updated) {
+        setLocalUsers(localUsers.map(u =>
+          u.id === editingUser.id
+            ? { ...u, ...updatePayload, avatar: updated.avatar || u.avatar }
+            : u
+        ));
+        toast.success('Utilisateur modifié avec succès');
+        setShowModal(false);
+      } else {
+        toast.error('Échec de la modification');
+      }
     } else {
-      const newUser = {
-        id: Date.now(),
-        ...formData,
-        avatar: formData.name.split(' ').map(n => n[0]).join('').toUpperCase(),
-        examsCount: 0,
-        studentsCount: 0
-      };
-      setLocalUsers([...localUsers, newUser]);
-      toast.success('Utilisateur ajouté avec succès');
+      // Adding new user
+      if (!formData.password) {
+        toast.error('Le mot de passe est obligatoire pour un nouvel utilisateur');
+        setSubmitting(false);
+        return;
+      }
+      if (formData.role === 'Student' && !formData.className) {
+        toast.error('La classe est obligatoire pour un étudiant');
+        setSubmitting(false);
+        return;
+      }
+
+      const payload = { ...formData };
+      const newUser = await addUser(payload);
+      if (newUser) {
+        setLocalUsers(prev => [...prev, {
+          ...newUser,
+          avatar: newUser.avatar || newUser.name.split(' ').map(n => n[0]).join('').toUpperCase(),
+          examsCount: 0,
+          studentsCount: 0
+        }]);
+        toast.success('Utilisateur ajouté avec succès');
+        setShowModal(false);
+      } else {
+        toast.error('Échec de l\'ajout');
+      }
     }
-    setShowModal(false);
+
+    setSubmitting(false);
   };
 
   const getRoleBadge = (role) => {
@@ -425,6 +458,18 @@ const UsersPage = () => {
                 <label>Email *</label>
                 <input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} placeholder="email@exemple.com" />
               </div>
+              {!editingUser && (
+                <div className="users-form-group">
+                  <label>Mot de passe *</label>
+                  <input type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} placeholder="Min. 6 caractères" />
+                </div>
+              )}
+              {formData.role === 'Student' && (
+                <div className="users-form-group">
+                  <label>Classe *</label>
+                  <input type="text" value={formData.className} onChange={(e) => setFormData({...formData, className: e.target.value})} placeholder="Ex: L1 INFO A" />
+                </div>
+              )}
               <div className="users-form-row">
                 <div className="users-form-group">
                   <label>Rôle</label>
@@ -463,8 +508,8 @@ const UsersPage = () => {
             </div>
             <div className="users-modal-footer">
               <button className="btn-secondary" onClick={() => setShowModal(false)}>Annuler</button>
-              <button className="btn-primary" onClick={handleSubmit}>
-                {editingUser ? 'Modifier' : 'Ajouter'}
+              <button className="btn-primary" onClick={handleSubmit} disabled={submitting}>
+                {submitting ? 'Traitement...' : (editingUser ? 'Modifier' : 'Ajouter')}
               </button>
             </div>
           </div>

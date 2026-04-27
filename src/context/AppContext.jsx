@@ -109,7 +109,7 @@ export const AppProvider = ({ children }) => {
   const addUser = async (userData) => {
     try {
       const newUser = await api.post('/users', userData);
-      setUsers([...users, newUser]);
+      setUsers(prev => [...prev, newUser]);
       toast.success('Utilisateur ajouté avec succès');
       return newUser;
     } catch (err) {
@@ -121,7 +121,7 @@ export const AppProvider = ({ children }) => {
   const updateUser = async (id, userData) => {
     try {
       const updatedUser = await api.put(`/users/${id}`, userData);
-      setUsers(users.map(u => u.id === id ? updatedUser : u));
+      setUsers(prev => prev.map(u => u.id === id ? updatedUser : u));
       toast.success('Utilisateur mis à jour avec succès');
       return updatedUser;
     } catch (err) {
@@ -133,7 +133,7 @@ export const AppProvider = ({ children }) => {
   const deleteUser = async (id) => {
     try {
       await api.delete(`/users/${id}`);
-      setUsers(users.filter(u => u.id !== id));
+      setUsers(prev => prev.filter(u => u.id !== id));
       toast.success('Utilisateur supprimé avec succès');
       return true;
     } catch (err) {

@@ -20,10 +20,12 @@ import {
   AlertTriangle,
   ExternalLink,
   Check,
-  Trash2
+  Trash2,
+  HelpCircle
 } from 'lucide-react';
 import { AppProvider, AppContext } from './context/AppContext';
 import { EliminationProvider } from './context/EliminationContext';
+import { CorrectionProvider } from './context/CorrectionContext';
 import { Toaster } from 'react-hot-toast';
 import './index.css';
 
@@ -39,8 +41,12 @@ import ReportsPage from './pages/ReportsPage';
 import EliminationPage from './pages/EliminationPage';
 import SettingsPage from './pages/SettingsPage';
 import CourseraLinksPage from './pages/CourseraLinksPage';
+import CorrectionRequestsPage from './pages/CorrectionRequestsPage';
+import AdminCorrectionPage from './pages/AdminCorrectionPage';
+import TeacherCorrectionPage from './pages/TeacherCorrectionPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
+
 const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const { user, logout } = useContext(AppContext);
   const role = user?.role || 'Student';
@@ -54,6 +60,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     { path: '/assignment', icon: FileText, label: 'Affectation', roles: ['Admin'] },
     { path: '/grades', icon: CheckCircle, label: 'Notes', roles: ['Admin', 'Teacher', 'Student'] },
     { path: '/reports', icon: FileText, label: 'Rapports', roles: ['Admin', 'Teacher'] },
+    { path: '/correction-requests', icon: HelpCircle, label: 'Demandes de Correction', roles: ['Student'] },
+    { path: '/admin-corrections', icon: HelpCircle, label: 'Gestion Corrections', roles: ['Admin'] },
+    { path: '/teacher-corrections', icon: HelpCircle, label: 'Corrections Assignées', roles: ['Teacher'] },
     { path: '/eliminations', icon: AlertTriangle, label: 'Éliminations', roles: ['Admin', 'Teacher', 'Student'] },
     { path: '/coursera-links', icon: ExternalLink, label: 'Ressources', roles: ['Admin', 'Teacher', 'Student'] },
     { path: '/settings', icon: Settings, label: 'Paramètres', roles: ['Admin', 'Teacher', 'Student'] },
@@ -298,6 +307,9 @@ const AppContent = () => {
                 <Route path="/grades" element={<GradesPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/eliminations" element={<EliminationPage />} />
+                <Route path="/correction-requests" element={<CorrectionRequestsPage />} />
+                <Route path="/admin-corrections" element={<AdminCorrectionPage />} />
+                <Route path="/teacher-corrections" element={<TeacherCorrectionPage />} />
                 <Route path="/coursera-links" element={<CourseraLinksPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Routes>
@@ -313,30 +325,32 @@ function App() {
   return (
     <AppProvider>
       <EliminationProvider>
-        <Toaster 
-          position="top-right" 
-          toastOptions={{
-            style: {
-              borderRadius: '12px',
-              background: '#1E293B',
-              color: '#fff',
-              border: '1px solid rgba(59, 130, 246, 0.2)',
-            },
-            success: {
-              iconTheme: {
-                primary: '#10B981',
-                secondary: '#fff',
+        <CorrectionProvider>
+          <Toaster 
+            position="top-right" 
+            toastOptions={{
+              style: {
+                borderRadius: '12px',
+                background: '#1E293B',
+                color: '#fff',
+                border: '1px solid rgba(59, 130, 246, 0.2)',
               },
-            },
-            error: {
-              iconTheme: {
-                primary: '#EF4444',
-                secondary: '#fff',
+              success: {
+                iconTheme: {
+                  primary: '#10B981',
+                  secondary: '#fff',
+                },
               },
-            },
-          }} 
-        />
-        <AppContent />
+              error: {
+                iconTheme: {
+                  primary: '#EF4444',
+                  secondary: '#fff',
+                },
+              },
+            }} 
+          />
+          <AppContent />
+        </CorrectionProvider>
       </EliminationProvider>
     </AppProvider>
   );

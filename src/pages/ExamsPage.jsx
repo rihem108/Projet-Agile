@@ -100,7 +100,7 @@ const ExamsPage = () => {
     setEditingExam(null);
     setFormData({
       subject: '',
-      className: '',
+      className: 'Non definie',
       code: '',
       date: '',
       time: '',
@@ -161,14 +161,14 @@ const ExamsPage = () => {
       return;
     }
 
-    if (!formData.subject || !formData.className || !formData.code || !formData.date || !formData.duration) {
+    if (!formData.subject || !formData.code || !formData.date || !formData.duration) {
       toast.error('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
     const examPayload = {
       subject: formData.subject,
-      className: formData.className,
+      className: (formData.className || '').trim() || 'Non definie',
       code: formData.code,
       date: formData.date,
       time: formData.time,

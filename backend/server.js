@@ -10,6 +10,7 @@ const Exam = require('./models/Exam');
 const Room = require('./models/Room');
 const Assignment = require('./models/Assignment');
 const Grade = require('./models/Grade');
+const CorrectionRequest = require('./models/CorrectionRequest');
 const ResourceLink = require('./models/ResourceLink');
 const Notification = require('./models/Notification');
 
@@ -146,17 +147,62 @@ app.get('/api/users', async (req, res) => {
   res.json(users);
 });
 app.post('/api/users', async (req, res) => {
-  const user = new User(req.body);
-  await user.save();
-  res.json(user);
+  try {
+    const { name, email, password, role, className, status, phone, address, department, joinDate } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'name, email et password sont obligatoires' });
+    }
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Cet email existe déjà' });
+    }
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role: role || 'Student',
+      className: role === 'Student' ? className : undefined,
+      status,
+      phone,
+      address,
+      department,
+      joinDate
+    });
+    await user.save();
+    const userResponse = await User.findById(user._id);
+    res.json(userResponse);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
 });
 app.put('/api/users/:id', async (req, res) => {
-  const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.json(user);
+  try {
+    const updateData = { ...req.body };
+    if (updateData.password) {
+      const salt = await bcrypt.genSalt(10);
+      updateData.password = await bcrypt.hash(updateData.password, salt);
+    }
+    const user = await User.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    if (!user) {
+      return res.status(404).json({ message: 'Utilisateur introuvable' });
+    }
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
 });
 app.delete('/api/users/:id', async (req, res) => {
-  await User.findByIdAndDelete(req.params.id);
-  res.json({ message: 'User deleted' });
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'Utilisateur introuvable' });
+    }
+    res.json({ message: 'User deleted' });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
 });
 
 // EXAMS
@@ -192,43 +238,100 @@ app.get('/api/exams', async (req, res) => {
   }
 });
 app.post('/api/exams', async (req, res) => {
-  if (req.user?.role === 'Student') {
-    return res.status(403).json({ message: 'Accès refusé' });
-  }
+  try {
+    if (req.user?.role === 'Student') {
+      return res.status(403).json({ message: 'Accès refusé' });
+    }
 
-  const { subject, className, date, time, duration, coefficient } = req.body;
-  const exam = new Exam({
-    subject,
-    className: String(className || '').trim(),
-    date,
-    time,
-    duration,
-    coefficient: String(coefficient || '').trim(),
-    createdBy: req.user?.id
-  });
-  await exam.save();
-  res.json(exam);
+    const {
+      subject,
+      className,
+      code,
+      date,
+      time,
+      duration,
+      room,
+      supervisor,
+      coefficient,
+      maxScore,
+      type,
+      status,
+      description
+    } = req.body;
+
+    if (!subject || !date || !duration) {
+      return res.status(400).json({ message: 'subject, date et duration sont obligatoires' });
+    }
+
+    const exam = new Exam({
+      subject: String(subject || '').trim(),
+      className: String(className || '').trim() || 'Non definie',
+      code: String(code || '').trim(),
+      date,
+      time: String(time || '').trim(),
+      duration,
+      room: String(room || '').trim(),
+      supervisor: String(supervisor || '').trim(),
+      coefficient: String(coefficient || '').trim(),
+      maxScore: String(maxScore || '').trim(),
+      type: type || 'normal',
+      status: status || 'scheduled',
+      description: String(description || '').trim(),
+      createdBy: req.user?.id
+    });
+
+    await exam.save();
+    res.json(exam);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
 });
 app.put('/api/exams/:id', async (req, res) => {
-  if (req.user?.role === 'Student') {
-    return res.status(403).json({ message: 'Accès refusé' });
+  try {
+    if (req.user?.role === 'Student') {
+      return res.status(403).json({ message: 'Accès refusé' });
+    }
+
+    const exam = await Exam.findById(req.params.id);
+    if (!exam) {
+      return res.status(404).json({ message: 'Exam not found' });
+    }
+
+    const {
+      subject,
+      className,
+      code,
+      date,
+      time,
+      duration,
+      room,
+      supervisor,
+      coefficient,
+      maxScore,
+      type,
+      status,
+      description
+    } = req.body;
+
+    if (subject !== undefined) exam.subject = String(subject || '').trim();
+    if (className !== undefined) exam.className = String(className || '').trim() || 'Non definie';
+    if (code !== undefined) exam.code = String(code || '').trim();
+    if (date !== undefined) exam.date = date;
+    if (time !== undefined) exam.time = String(time || '').trim();
+    if (duration !== undefined) exam.duration = duration;
+    if (room !== undefined) exam.room = String(room || '').trim();
+    if (supervisor !== undefined) exam.supervisor = String(supervisor || '').trim();
+    if (coefficient !== undefined) exam.coefficient = String(coefficient || '').trim();
+    if (maxScore !== undefined) exam.maxScore = String(maxScore || '').trim();
+    if (type !== undefined) exam.type = type;
+    if (status !== undefined) exam.status = status;
+    if (description !== undefined) exam.description = String(description || '').trim();
+
+    await exam.save();
+    res.json(exam);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
   }
-
-  const exam = await Exam.findById(req.params.id);
-  if (!exam) {
-    return res.status(404).json({ message: 'Exam not found' });
-  }
-
-  const { subject, className, date, time, duration, coefficient } = req.body;
-  if (subject !== undefined) exam.subject = subject;
-  if (className !== undefined) exam.className = String(className || '').trim();
-  if (date !== undefined) exam.date = date;
-  if (time !== undefined) exam.time = time;
-  if (duration !== undefined) exam.duration = duration;
-  if (coefficient !== undefined) exam.coefficient = String(coefficient || '').trim();
-
-  await exam.save();
-  res.json(exam);
 });
 app.put('/api/exams/:id/attendance', async (req, res) => {
   try {
@@ -371,23 +474,6 @@ app.delete('/api/assignments/:id', async (req, res) => {
   try {
     await Assignment.findByIdAndDelete(req.params.id);
     res.json({ message: 'Affectation supprimée' });
-  } catch (err) {
-    res.status(500).json({ message: 'Erreur serveur' });
-  }
-});
-app.post('/api/assignments', async (req, res) => {
-  try {
-    const assignment = new Assignment(req.body);
-    await assignment.save();
-    res.json(assignment);
-  } catch (err) {
-    res.status(500).json({ message: 'Erreur serveur' });
-  }
-});
-app.put('/api/assignments/:id', async (req, res) => {
-  try {
-    const assignment = await Assignment.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    res.json(assignment);
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur' });
   }
@@ -724,6 +810,250 @@ app.delete('/api/notifications/:id', async (req, res) => {
   }
 });
 
+// CORRECTION REQUESTS
+app.get('/api/correction-requests', async (req, res) => {
+  try {
+    if (req.user?.role === 'Student') {
+      // Students can only see their own requests
+      const requests = await CorrectionRequest.find({ studentId: req.user.id })
+        .populate('studentId', 'name className')
+        .populate('gradeId', 'grade examId')
+        .populate('examId', 'subject className date')
+        .populate('teacherId', 'name email')
+        .populate('reviewedByAdmin', 'name')
+        .populate('reviewedByTeacher', 'name')
+        .sort({ createdAt: -1 });
+      return res.json(requests);
+    }
+
+    if (req.user?.role === 'Teacher') {
+      // Teachers can see requests assigned to them
+      const requests = await CorrectionRequest.find({ 
+        status: { $in: ['admin_approved', 'teacher_reviewed', 'completed'] },
+        teacherId: req.user.id 
+      })
+        .populate('studentId', 'name className')
+        .populate('gradeId', 'grade examId')
+        .populate('examId', 'subject className date')
+        .populate('teacherId', 'name email')
+        .populate('reviewedByAdmin', 'name')
+        .populate('reviewedByTeacher', 'name')
+        .sort({ createdAt: -1 });
+      return res.json(requests);
+    }
+
+    // Admin can see all requests
+    const requests = await CorrectionRequest.find()
+      .populate('studentId', 'name className')
+      .populate('gradeId', 'grade examId')
+      .populate('examId', 'subject className date')
+      .populate('teacherId', 'name email')
+      .populate('reviewedByAdmin', 'name')
+      .populate('reviewedByTeacher', 'name')
+      .sort({ createdAt: -1 });
+    res.json(requests);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+app.post('/api/correction-requests', async (req, res) => {
+  try {
+    if (req.user?.role !== 'Student') {
+      return res.status(403).json({ message: 'Accès refusé' });
+    }
+
+    const { gradeId, type, reason, description } = req.body;
+    if (!gradeId || !type || !reason) {
+      return res.status(400).json({ message: 'gradeId, type et reason sont obligatoires' });
+    }
+
+    // Check if grade exists and belongs to the student
+    const grade = await Grade.findById(gradeId).populate('examId');
+    if (!grade || String(grade.studentId) !== String(req.user.id)) {
+      return res.status(400).json({ message: 'Note invalide' });
+    }
+
+    // Find the teacher assigned to this exam
+    const assignment = await Assignment.findOne({ examId: grade.examId._id });
+    if (!assignment) {
+      return res.status(400).json({ message: 'Aucun enseignant assigné à cet examen' });
+    }
+
+    // Check if request already exists for this grade
+    const existingRequest = await CorrectionRequest.findOne({ 
+      gradeId, 
+      studentId: req.user.id,
+      status: { $in: ['pending', 'admin_approved'] }
+    });
+    if (existingRequest) {
+      return res.status(400).json({ message: 'Une demande existe déjà pour cette note' });
+    }
+
+    const correctionRequest = new CorrectionRequest({
+      studentId: req.user.id,
+      gradeId,
+      examId: grade.examId._id,
+      teacherId: assignment.supervisorId,
+      type,
+      reason: reason.trim(),
+      description: description?.trim() || ''
+    });
+
+    await correctionRequest.save();
+
+    // Create notifications for all admins
+    const admins = await User.find({ role: 'Admin' });
+    for (const admin of admins) {
+      const adminNotification = new Notification({
+        userId: admin._id,
+        type: 'correction_request',
+        message: `Nouvelle demande de ${type === 'second_correction' ? 'seconde correction' : 'vérification de note'} pour ${grade.examId.subject}`,
+        relatedId: correctionRequest._id
+      });
+      await adminNotification.save();
+    }
+
+    const populated = await CorrectionRequest.findById(correctionRequest._id)
+      .populate('studentId', 'name className')
+      .populate('gradeId', 'grade examId')
+      .populate('examId', 'subject className date')
+      .populate('teacherId', 'name email');
+
+    res.json(populated);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+app.put('/api/correction-requests/:id/admin-decision', async (req, res) => {
+  try {
+    if (req.user?.role !== 'Admin') {
+      return res.status(403).json({ message: 'Accès refusé' });
+    }
+
+    const { decision, approved } = req.body;
+    if (!decision) {
+      return res.status(400).json({ message: 'La décision est obligatoire' });
+    }
+
+    const request = await CorrectionRequest.findById(req.params.id);
+    if (!request) {
+      return res.status(404).json({ message: 'Demande introuvable' });
+    }
+
+    request.status = approved ? 'admin_approved' : 'admin_rejected';
+    request.adminDecision = decision.trim();
+    request.reviewedByAdmin = req.user.id;
+    request.adminReviewedAt = new Date();
+    request.updatedAt = new Date();
+
+    await request.save();
+
+    if (approved) {
+      // Create notification for teacher
+      const teacherNotification = new Notification({
+        userId: request.teacherId,
+        type: 'correction_request_approved',
+        message: `Demande de ${request.type === 'second_correction' ? 'seconde correction' : 'vérification de note'} approuvée pour ${request.examId}`,
+        relatedId: request._id
+      });
+      await teacherNotification.save();
+    }
+
+    const populated = await CorrectionRequest.findById(request._id)
+      .populate('studentId', 'name className')
+      .populate('gradeId', 'grade examId')
+      .populate('examId', 'subject className date')
+      .populate('teacherId', 'name email')
+      .populate('reviewedByAdmin', 'name');
+
+    res.json(populated);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+app.put('/api/correction-requests/:id/teacher-decision', async (req, res) => {
+  try {
+    if (req.user?.role !== 'Teacher') {
+      return res.status(403).json({ message: 'Accès refusé' });
+    }
+
+    const { decision, newGrade } = req.body;
+    if (!decision) {
+      return res.status(400).json({ message: 'La décision est obligatoire' });
+    }
+
+    const request = await CorrectionRequest.findById(req.params.id);
+    if (!request) {
+      return res.status(404).json({ message: 'Demande introuvable' });
+    }
+
+    if (String(request.teacherId) !== String(req.user.id)) {
+      return res.status(403).json({ message: 'Cette demande ne vous est pas assignée' });
+    }
+
+    if (request.status !== 'admin_approved') {
+      return res.status(400).json({ message: 'Cette demande n\'a pas été approuvée par l\'administration' });
+    }
+
+    request.status = 'teacher_reviewed';
+    request.teacherDecision = decision.trim();
+    request.reviewedByTeacher = req.user.id;
+    request.teacherReviewedAt = new Date();
+    request.updatedAt = new Date();
+
+    if (newGrade !== undefined && newGrade !== null) {
+      if (newGrade < 0 || newGrade > 20) {
+        return res.status(400).json({ message: 'La note doit être comprise entre 0 et 20' });
+      }
+      request.newGrade = newGrade;
+
+      // Update the actual grade
+      await Grade.findByIdAndUpdate(request.gradeId, { 
+        grade: newGrade,
+        validated: false // Teacher grade changes need revalidation
+      });
+    }
+
+    await request.save();
+
+    // Create notification for student
+    const studentNotification = new Notification({
+      userId: request.studentId,
+      type: 'correction_request_completed',
+      message: `Votre demande de ${request.type === 'second_correction' ? 'seconde correction' : 'vérification de note'} a été traitée`,
+      relatedId: request._id
+    });
+    await studentNotification.save();
+
+    const populated = await CorrectionRequest.findById(request._id)
+      .populate('studentId', 'name className')
+      .populate('gradeId', 'grade examId')
+      .populate('examId', 'subject className date')
+      .populate('teacherId', 'name email')
+      .populate('reviewedByTeacher', 'name');
+
+    res.json(populated);
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+app.delete('/api/correction-requests/:id', async (req, res) => {
+  try {
+    if (req.user?.role !== 'Admin') {
+      return res.status(403).json({ message: 'Accès refusé' });
+    }
+
+    await CorrectionRequest.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Demande supprimée' });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
 // SEED DB (Development Helper)
 app.get('/api/seed', async (req, res) => {
   await User.deleteMany();
@@ -731,6 +1061,7 @@ app.get('/api/seed', async (req, res) => {
   await Room.deleteMany();
   await Grade.deleteMany();
   await Assignment.deleteMany({});
+  await CorrectionRequest.deleteMany({});
 
   const salt = await bcrypt.genSalt(10);
   const pass = await bcrypt.hash('123456', salt);
@@ -743,8 +1074,8 @@ app.get('/api/seed', async (req, res) => {
   const e1 = await Exam.create({ subject: 'Mathématiques', className: 'L1 INFO A', date: '2026-05-15', duration: '2h' });
   const e2 = await Exam.create({ subject: 'Physique', className: 'L1 INFO B', date: '2026-05-16', duration: '1h30' });
   
-  const r1 = await Room.create({ name: 'Salle A101', capacity: 30 });
-  const r2 = await Room.create({ name: 'Amphi B', capacity: 150 });
+  const r1 = await Room.create({ name: 'Salle A101', building: 'A', capacity: 30 });
+  const r2 = await Room.create({ name: 'Amphi B', building: 'B', capacity: 150 });
   
   await Grade.create({ examId: e1._id, studentId: u2._id, grade: 14, validated: true });
   await Grade.create({ examId: e1._id, studentId: u3._id, grade: 8, validated: false });
