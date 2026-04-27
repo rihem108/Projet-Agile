@@ -53,6 +53,11 @@ const UsersPage = () => {
 
   const [localUsers, setLocalUsers] = useState([]);
 
+  // Delete confirmation modal state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
   useEffect(() => {
     if (users) {
       setLocalUsers(users);
@@ -108,15 +113,28 @@ const UsersPage = () => {
     setShowModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
-      const deleted = await deleteUser(id);
-      if (deleted) {
-        setLocalUsers(localUsers.filter(u => u.id !== id));
-      } else {
-        toast.error('Erreur lors de la suppression');
-      }
+  const openDeleteConfirm = (user) => {
+    setUserToDelete(user);
+    setShowDeleteConfirm(true);
+  };
+
+  const closeDeleteConfirm = () => {
+    setShowDeleteConfirm(false);
+    setUserToDelete(null);
+    setDeleting(false);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    setDeleting(true);
+    const deleted = await deleteUser(userToDelete.id);
+    if (deleted) {
+      setLocalUsers(localUsers.filter(u => u.id !== userToDelete.id));
+      toast.success('Utilisateur supprimé avec succès');
+    } else {
+      toast.error('Erreur lors de la suppression');
     }
+    closeDeleteConfirm();
   };
 
   const handleViewDetails = (user) => {
@@ -357,7 +375,7 @@ const UsersPage = () => {
                         <button className="users-action-btn edit" onClick={() => handleEdit(user)} title="Modifier">
                           <Edit size={16} />
                         </button>
-                        <button className="users-action-btn delete" onClick={() => handleDelete(user.id)} title="Supprimer">
+                        <button className="users-action-btn delete" onClick={() => openDeleteConfirm(user)} title="Supprimer">
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -510,6 +528,46 @@ const UsersPage = () => {
               <button className="btn-secondary" onClick={() => setShowModal(false)}>Annuler</button>
               <button className="btn-primary" onClick={handleSubmit} disabled={submitting}>
                 {submitting ? 'Traitement...' : (editingUser ? 'Modifier' : 'Ajouter')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && userToDelete && (
+        <div className="users-modal-overlay delete-confirm-overlay" onClick={closeDeleteConfirm}>
+          <div className="users-modal delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="delete-confirm-body">
+              <div className="delete-confirm-icon">
+                <Trash2 size={32} />
+              </div>
+              <h3 className="delete-confirm-title">Confirmer la suppression</h3>
+              <p className="delete-confirm-text">
+                Êtes-vous sûr de vouloir supprimer <strong>{userToDelete.name}</strong> ?
+                Cette action est irréversible et supprimera définitivement cet utilisateur de la base de données.
+              </p>
+              <div className="delete-confirm-user-info">
+                <span className="delete-confirm-email">{userToDelete.email}</span>
+                {getRoleBadge(userToDelete.role)}
+              </div>
+            </div>
+            <div className="delete-confirm-footer">
+              <button className="btn-secondary" onClick={closeDeleteConfirm} disabled={deleting}>
+                Annuler
+              </button>
+              <button className="btn-danger" onClick={confirmDelete} disabled={deleting}>
+                {deleting ? (
+                  <>
+                    <span className="spinner-small" />
+                    Suppression...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={16} />
+                    Supprimer définitivement
+                  </>
+                )}
               </button>
             </div>
           </div>
