@@ -15,6 +15,8 @@ export const AppProvider = ({ children }) => {
   const [rooms, setRooms] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [grades, setGrades] = useState([]);
+  const [resourceLinks, setResourceLinks] = useState([]);
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -38,18 +40,22 @@ export const AppProvider = ({ children }) => {
       // Load data from backend based on user role
       const loadData = async () => {
         try {
-          const [usersData, examsData, roomsData, assignmentsData, gradesData] = await Promise.all([
+          const [usersData, examsData, roomsData, assignmentsData, gradesData, resourceLinksData, notificationsData] = await Promise.all([
             api.get('/users').catch(() => []),
             api.get('/exams').catch(() => []),
             api.get('/rooms').catch(() => []),
             api.get('/assignments').catch(() => []),
-            api.get('/grades').catch(() => [])
+            api.get('/grades').catch(() => []),
+            api.get('/resource-links').catch(() => []),
+            api.get('/notifications').catch(() => [])
           ]);
           setUsers(usersData);
           setExams(examsData);
           setRooms(roomsData);
           setAssignments(assignmentsData);
           setGrades(gradesData);
+          setResourceLinks(resourceLinksData);
+          setNotifications(notificationsData);
         } catch (error) {
           console.error('Error loading data:', error);
         }
@@ -284,6 +290,66 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // CRUD operations for resource links
+  const addResourceLink = async (linkData) => {
+    try {
+      const newLink = await api.post('/resource-links', linkData);
+      setResourceLinks([...resourceLinks, newLink]);
+      toast.success('Lien de cours assigné avec succès');
+      return newLink;
+    } catch (err) {
+      toast.error(err.message || 'Erreur lors de l\'assignation');
+      return null;
+    }
+  };
+
+  const deleteResourceLink = async (id) => {
+    try {
+      await api.delete(`/resource-links/${id}`);
+      setResourceLinks(resourceLinks.filter(l => l.id !== id));
+      toast.success('Lien supprimé avec succès');
+      return true;
+    } catch (err) {
+      toast.error(err.message || 'Erreur lors de la suppression');
+      return false;
+    }
+  };
+
+  // CRUD operations for notifications
+  const markNotificationRead = async (id) => {
+    try {
+      const updated = await api.put(`/notifications/${id}/read`);
+      setNotifications(notifications.map(n => n.id === id ? updated : n));
+      return updated;
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
+  };
+
+  const markAllNotificationsRead = async () => {
+    try {
+      await api.put('/notifications/read-all');
+      setNotifications(notifications.map(n => ({ ...n, read: true })));
+      toast.success('Toutes les notifications marquées comme lues');
+      return true;
+    } catch (err) {
+      toast.error(err.message || 'Erreur');
+      return false;
+    }
+  };
+
+  const deleteNotification = async (id) => {
+    try {
+      await api.delete(`/notifications/${id}`);
+      setNotifications(notifications.filter(n => n.id !== id));
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
   if (loadingInitial) {
     return (
       <div style={{ 
@@ -316,12 +382,16 @@ export const AppProvider = ({ children }) => {
       rooms, setRooms,
       assignments, setAssignments,
       grades, setGrades,
+      resourceLinks, setResourceLinks,
+      notifications, setNotifications,
       // CRUD operations
       addUser, updateUser, deleteUser,
       addExam, updateExam, deleteExam,
       addRoom, updateRoom, deleteRoom,
       addAssignment, updateAssignment, deleteAssignment,
       addGrade, updateGrade, deleteGrade,
+      addResourceLink, deleteResourceLink,
+      markNotificationRead, markAllNotificationsRead, deleteNotification,
     }}>
       {children}
     </AppContext.Provider>

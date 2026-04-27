@@ -17,7 +17,10 @@ import {
   X, 
   ChevronDown,
   Settings,
-  AlertTriangle
+  AlertTriangle,
+  ExternalLink,
+  Check,
+  Trash2
 } from 'lucide-react';
 import { AppProvider, AppContext } from './context/AppContext';
 import { EliminationProvider } from './context/EliminationContext';
@@ -35,6 +38,7 @@ import GradesPage from './pages/GradesPage';
 import ReportsPage from './pages/ReportsPage';
 import EliminationPage from './pages/EliminationPage';
 import SettingsPage from './pages/SettingsPage';
+import CourseraLinksPage from './pages/CourseraLinksPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
@@ -51,6 +55,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     { path: '/grades', icon: CheckCircle, label: 'Notes', roles: ['Admin', 'Teacher', 'Student'] },
     { path: '/reports', icon: FileText, label: 'Rapports', roles: ['Admin', 'Teacher'] },
     { path: '/eliminations', icon: AlertTriangle, label: 'Éliminations', roles: ['Admin', 'Teacher', 'Student'] },
+    { path: '/coursera-links', icon: ExternalLink, label: 'Ressources', roles: ['Admin', 'Teacher', 'Student'] },
     { path: '/settings', icon: Settings, label: 'Paramètres', roles: ['Admin', 'Teacher', 'Student'] },
   ];
 
@@ -90,11 +95,14 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
 };
 
 const Header = ({ sidebarOpen, setSidebarOpen }) => {
-  const { user } = useContext(AppContext);
+  const { user, notifications, markNotificationRead, markAllNotificationsRead, deleteNotification } = useContext(AppContext);
+  const [showNotifications, setShowNotifications] = useState(false);
   const profileImageStorageKey = `profileImage:${user?.id || user?._id || user?.email || 'current'}`;
   const [headerProfileImage, setHeaderProfileImage] = useState(() => (
     localStorage.getItem(profileImageStorageKey) || user?.avatar || user?.profileImage || ''
   ));
+
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   useEffect(() => {
     const syncProfileImage = () => {
@@ -119,7 +127,28 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
       window.removeEventListener('storage', syncProfileImage);
     };
   }, [profileImageStorageKey, user?.avatar, user?.profileImage]);
-  
+
+  const handleNotificationClick = async (notif, e) => {
+    e.stopPropagation();
+    if (!notif.read) {
+      await markNotificationRead(notif.id);
+    }
+    if (notif.type === 'resource_link') {
+      window.location.href = '/coursera-links';
+    }
+    setShowNotifications(false);
+  };
+
+  const handleMarkAllRead = async (e) => {
+    e.stopPropagation();
+    await markAllNotificationsRead();
+  };
+
+  const handleDeleteNotif = async (id, e) => {
+    e.stopPropagation();
+    await deleteNotification(id);
+  };
+
   return (
     <header className="header">
       <div className="header-left">
@@ -136,10 +165,61 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
       </div>
       
       <div className="header-right">
-        <button className="notification-btn">
-          <Bell size={20} />
-          <span className="notification-dot"></span>
-        </button>
+        <div className="notification-wrapper">
+          <button 
+            className="notification-btn"
+            onClick={() => setShowNotifications(!showNotifications)}
+          >
+            <Bell size={20} />
+            {unreadCount > 0 && (
+              <span className="notification-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+            )}
+          </button>
+          
+          {showNotifications && (
+            <div className="notification-dropdown">
+              <div className="notification-dropdown-header">
+                <h4>Notifications</h4>
+                {unreadCount > 0 && (
+                  <button onClick={handleMarkAllRead} className="mark-all-read">
+                    <Check size={14} /> Tout marquer comme lu
+                  </button>
+                )}
+              </div>
+              <div className="notification-dropdown-body">
+                {notifications.length === 0 ? (
+                  <div className="notification-empty">
+                    <Bell size={32} color="#94A3B8" />
+                    <p>Aucune notification</p>
+                  </div>
+                ) : (
+                  notifications.map(notif => (
+                    <div 
+                      key={notif.id} 
+                      className={`notification-item ${!notif.read ? 'unread' : ''}`}
+                      onClick={(e) => handleNotificationClick(notif, e)}
+                    >
+                      <div className="notification-dot-indicator"></div>
+                      <div className="notification-content">
+                        <p className="notification-message">{notif.message}</p>
+                        <span className="notification-time">
+                          {notif.createdAt ? new Date(notif.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
+                        </span>
+                      </div>
+                      <button 
+                        className="notification-delete"
+                        onClick={(e) => handleDeleteNotif(notif.id, e)}
+                        title="Supprimer"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
         
         <div className="user-profile">
           <div className="user-avatar">
@@ -218,6 +298,7 @@ const AppContent = () => {
                 <Route path="/grades" element={<GradesPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/eliminations" element={<EliminationPage />} />
+                <Route path="/coursera-links" element={<CourseraLinksPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Routes>
             </MainLayout>
