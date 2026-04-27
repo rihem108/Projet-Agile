@@ -36,11 +36,26 @@ const AssignmentPage = () => {
   // Get teachers
   const teachers = users?.filter(u => u.role === 'Teacher') || [];
 
-  const getExamSubject = (id) => exams?.find(e => String(e.id) === String(id))?.subject || 'Inconnu';
-  const getExamDuration = (id) => exams?.find(e => String(e.id) === String(id))?.duration || '2h';
-  const getRoomName = (id) => rooms?.find(r => String(r.id) === String(id))?.name || 'Non assignée';
-  const getRoomCapacity = (id) => rooms?.find(r => String(r.id) === String(id))?.capacity || '-';
-  const getSupervisorName = (id) => users?.find(u => String(u.id) === String(id))?.name || 'Non assigné';
+  const getExamSubject = (id) => {
+    if (id && typeof id === 'object') return id.subject || 'Inconnu';
+    return exams?.find(e => String(e.id) === String(id))?.subject || 'Inconnu';
+  };
+  const getExamDuration = (id) => {
+    if (id && typeof id === 'object') return id.duration || '2h';
+    return exams?.find(e => String(e.id) === String(id))?.duration || '2h';
+  };
+  const getRoomName = (id) => {
+    if (id && typeof id === 'object') return id.name || 'Non assignée';
+    return rooms?.find(r => String(r.id) === String(id))?.name || 'Non assignée';
+  };
+  const getRoomCapacity = (id) => {
+    if (id && typeof id === 'object') return id.capacity || '-';
+    return rooms?.find(r => String(r.id) === String(id))?.capacity || '-';
+  };
+  const getSupervisorName = (id) => {
+    if (id && typeof id === 'object') return id.name || 'Non assigné';
+    return users?.find(u => String(u.id) === String(id))?.name || 'Non assigné';
+  };
 
   const filteredAssignments = assignments.filter(assignment => {
     const examName = getExamSubject(assignment.examId).toLowerCase();
@@ -59,12 +74,17 @@ const AssignmentPage = () => {
     setShowModal(true);
   };
 
+  const getRefId = (ref) => {
+    if (ref && typeof ref === 'object') return ref.id || ref._id || '';
+    return String(ref || '');
+  };
+
   const handleEdit = (assignment) => {
     setEditingAssignment(assignment);
     setFormData({
-      examId: String(assignment.examId || ''),
-      roomId: String(assignment.roomId || ''),
-      supervisorId: String(assignment.supervisorId || ''),
+      examId: getRefId(assignment.examId),
+      roomId: getRefId(assignment.roomId),
+      supervisorId: getRefId(assignment.supervisorId),
       date: assignment.date || '',
       time: assignment.time || ''
     });
@@ -73,7 +93,7 @@ const AssignmentPage = () => {
 
   // Auto-populate date and time when exam is selected
   const handleExamChange = (examId) => {
-    const selectedExam = exams?.find(e => e.id === parseInt(examId));
+    const selectedExam = exams?.find(e => String(e.id) === String(examId));
     if (selectedExam) {
       setFormData(prev => ({
         ...prev,
@@ -101,9 +121,9 @@ const AssignmentPage = () => {
     }
 
     const payload = {
-      examId: parseInt(formData.examId),
-      roomId: parseInt(formData.roomId),
-      supervisorId: parseInt(formData.supervisorId),
+      examId: formData.examId,
+      roomId: formData.roomId,
+      supervisorId: formData.supervisorId,
       date: formData.date,
       time: formData.time,
       status: 'scheduled'

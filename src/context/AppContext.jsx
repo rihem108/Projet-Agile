@@ -220,7 +220,7 @@ export const AppProvider = ({ children }) => {
   const addAssignment = async (assignmentData) => {
     try {
       const newAssignment = await api.post('/assignments', assignmentData);
-      setAssignments([...assignments, newAssignment]);
+      setAssignments(prev => [...prev, newAssignment]);
       toast.success('Affectation ajoutée avec succès');
       return newAssignment;
     } catch (err) {
@@ -232,7 +232,7 @@ export const AppProvider = ({ children }) => {
   const updateAssignment = async (id, assignmentData) => {
     try {
       const updatedAssignment = await api.put(`/assignments/${id}`, assignmentData);
-      setAssignments(assignments.map(a => a.id === id ? updatedAssignment : a));
+      setAssignments(prev => prev.map(a => a.id === id ? updatedAssignment : a));
       toast.success('Affectation mise à jour avec succès');
       return updatedAssignment;
     } catch (err) {
@@ -244,7 +244,7 @@ export const AppProvider = ({ children }) => {
   const deleteAssignment = async (id) => {
     try {
       await api.delete(`/assignments/${id}`);
-      setAssignments(assignments.filter(a => a.id !== id));
+      setAssignments(prev => prev.filter(a => a.id !== id));
       toast.success('Affectation supprimée avec succès');
       return true;
     } catch (err) {

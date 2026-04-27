@@ -3,7 +3,10 @@ const mongoose = require('mongoose');
 const AssignmentSchema = new mongoose.Schema({
   examId: { type: mongoose.Schema.Types.ObjectId, ref: 'Exam', required: true },
   roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Room', required: true },
-  supervisorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+  supervisorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  date: { type: String, default: '' },
+  time: { type: String, default: '' },
+  status: { type: String, enum: ['scheduled', 'completed'], default: 'scheduled' }
 }, { timestamps: true });
 
 AssignmentSchema.set('toJSON', {

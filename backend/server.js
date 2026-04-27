@@ -432,12 +432,12 @@ app.get('/api/assignments', async (req, res) => {
 });
 app.post('/api/assignments', async (req, res) => {
   try {
-    const { examId, roomId, supervisorId } = req.body;
+    const { examId, roomId, supervisorId, date, time, status } = req.body;
     if (!examId || !roomId || !supervisorId) {
       return res.status(400).json({ message: 'examId, roomId et supervisorId sont obligatoires' });
     }
 
-    const assignment = new Assignment({ examId, roomId, supervisorId });
+    const assignment = new Assignment({ examId, roomId, supervisorId, date, time, status });
     await assignment.save();
     const populated = await Assignment.findById(assignment._id)
       .populate('examId', 'subject className date duration')
@@ -450,15 +450,18 @@ app.post('/api/assignments', async (req, res) => {
 });
 app.put('/api/assignments/:id', async (req, res) => {
   try {
-    const { examId, roomId, supervisorId } = req.body;
+    const { examId, roomId, supervisorId, date, time, status } = req.body;
     const assignment = await Assignment.findById(req.params.id);
     if (!assignment) {
       return res.status(404).json({ message: 'Affectation introuvable' });
     }
 
-    if (examId) assignment.examId = examId;
-    if (roomId) assignment.roomId = roomId;
-    if (supervisorId) assignment.supervisorId = supervisorId;
+    if (examId !== undefined) assignment.examId = examId;
+    if (roomId !== undefined) assignment.roomId = roomId;
+    if (supervisorId !== undefined) assignment.supervisorId = supervisorId;
+    if (date !== undefined) assignment.date = date;
+    if (time !== undefined) assignment.time = time;
+    if (status !== undefined) assignment.status = status;
 
     await assignment.save();
     const populated = await Assignment.findById(assignment._id)
