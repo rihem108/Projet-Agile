@@ -1,5 +1,5 @@
 // src/pages/Dashboard.jsx
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { AppContext } from '../context/AppContext';
 import { Users, BookOpen, MapPin, CheckCircle, TrendingUp, Calendar, Clock, Award, LayoutDashboard } from 'lucide-react';
 
@@ -44,6 +44,31 @@ const Dashboard = () => {
   ];
 
   const visibleStats = stats.filter(stat => stat.visible.includes(role));
+
+  const importantEvents = useMemo(() => {
+    const events = [];
+
+    // Exams are already loaded globally in context. They are visible depending on role in backend.
+    for (const exam of exams || []) {
+      if (!exam?.date) continue;
+      events.push({
+        id: `exam:${exam.id}`,
+        date: exam.date,
+        title: `${exam.subject} (${exam.className || exam.class || 'Classe inconnue'})`,
+        subtitle: `${exam.code || ''}${exam.time ? ` • ${exam.time}` : ''}`.trim()
+      });
+    }
+
+    // Upcoming: keep only future-ish events and sort by date
+    const now = new Date();
+    return events
+      .filter(e => {
+        const d = new Date(e.date);
+        return !Number.isNaN(d.getTime()) && d >= new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      })
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .slice(0, 8);
+  }, [exams]);
 
   // Recent activity (mock data)
   const recentActivities = [
@@ -109,6 +134,40 @@ const Dashboard = () => {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Important Dates Calendar */}
+      <div className="important-dates-card">
+        <div className="activity-header">
+          <h2>Dates Importantes</h2>
+          <span className="important-dates-subtitle">Prochains examens</span>
+        </div>
+        <div className="important-dates-grid">
+          {importantEvents.length === 0 ? (
+            <div className="important-dates-empty">
+              <Calendar size={28} />
+              <div>
+                <p className="important-dates-empty-title">Aucune date importante</p>
+                <p className="important-dates-empty-text">Les examens à venir apparaîtront ici.</p>
+              </div>
+            </div>
+          ) : (
+            importantEvents.map((ev) => (
+              <div key={ev.id} className="important-date-item">
+                <div className="important-date-icon">
+                  <Calendar size={16} />
+                </div>
+                <div className="important-date-content">
+                  <p className="important-date-title">{ev.title}</p>
+                  <p className="important-date-subtitle">{ev.subtitle}</p>
+                </div>
+                <div className="important-date-date">
+                  <span>{new Date(ev.date).toLocaleDateString('fr-FR')}</span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
