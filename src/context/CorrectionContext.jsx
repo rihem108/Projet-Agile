@@ -12,15 +12,18 @@ export const CorrectionProvider = ({ children }) => {
 
   useEffect(() => {
     const loadCorrectionRequests = async () => {
-      if (user) {
-        try {
-          const requests = await api.get('/correction-requests');
-          setCorrectionRequests(requests);
-        } catch (error) {
-          console.error('Error loading correction requests:', error);
-        } finally {
-          setLoading(false);
-        }
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const requests = await api.get('/correction-requests');
+        setCorrectionRequests(requests);
+      } catch (error) {
+        console.error('Error loading correction requests:', error);
+      } finally {
+        setLoading(false);
       }
     };
 

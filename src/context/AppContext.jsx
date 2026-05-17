@@ -20,19 +20,24 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
-      api.get('/auth/me')
-        .then(u => {
-          setIsAuthenticated(true);
-          setUser(u);
-        })
-        .catch(() => {
-          localStorage.removeItem('token');
-        })
-        .finally(() => setLoadingInitial(false));
-    } else {
+
+    // If no token, we can immediately stop the global loader.
+    if (!token) {
       setLoadingInitial(false);
+      return;
     }
+
+    // Debug friendly: log errors so we know why loading never stops.
+    api.get('/auth/me')
+      .then(u => {
+        setIsAuthenticated(true);
+        setUser(u);
+      })
+      .catch((err) => {
+        console.error('auth/me failed:', err);
+        localStorage.removeItem('token');
+      })
+      .finally(() => setLoadingInitial(false));
   }, []);
 
   useEffect(() => {
